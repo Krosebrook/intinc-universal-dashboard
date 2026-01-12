@@ -5,19 +5,31 @@ import { blink } from '../../lib/blink';
 import { useDashboard } from '../../hooks/use-dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { WidgetConfig } from './WidgetGrid';
 
 export default function AIInsight() {
-  const { department } = useDashboard();
+  const { department, widgets } = useDashboard();
   const [insight, setInsight] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const fetchInsight = async () => {
     setLoading(true);
     try {
+      // Create a simplified version of the data for the AI
+      const contextData = widgets.map(w => ({
+        title: w.title,
+        type: w.type,
+        summary: w.data.slice(-3) // last 3 data points
+      }));
+
       const { text } = await blink.ai.generateText({
-        prompt: `Generate 3 high-impact, strategic bullet points for a ${department} dashboard. 
-        Focus on trends, anomalies, and performance optimization. 
-        Format as plain text bullet points. Be concise and professional.`,
+        prompt: `Analyze this dashboard data for the ${department} department and generate 3 high-impact, strategic bullet points.
+        
+        Dashboard Context:
+        ${JSON.stringify(contextData, null, 2)}
+
+        Focus on trends, anomalies, and performance optimization based on the specific widget data provided.
+        Format as plain text bullet points. Be concise, data-driven, and professional.`,
         system: "You are a Senior Business Intelligence Analyst at Intinc. Provide data-driven insights for executive dashboards.",
       });
       setInsight(text);
@@ -31,7 +43,7 @@ export default function AIInsight() {
 
   useEffect(() => {
     fetchInsight();
-  }, [department]);
+  }, [department, widgets]); // Re-fetch if widgets change
 
   return (
     <Card className="bg-primary border-none shadow-2xl shadow-primary/20 relative overflow-hidden h-full min-h-[350px]">

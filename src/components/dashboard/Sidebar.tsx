@@ -10,9 +10,14 @@ import {
   Settings,
   HelpCircle,
   Database,
-  Share2
+  Share2,
+  FileText,
+  X
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
+import { blink } from '../../lib/blink';
+import { toast } from 'react-hot-toast';
 
 const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'Sales', icon: BarChart3, label: 'Sales & Revenue' },
@@ -22,7 +27,20 @@ const departments: { id: Department; icon: any; label: string }[] = [
 ];
 
 export default function Sidebar() {
-  const { department, setDepartment } = useDashboard();
+  const { department, setDepartment, savedDashboards, loadDashboard } = useDashboard();
+
+  const deleteDashboard = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await blink.db.dashboards.delete({ id });
+      toast.success('Dashboard deleted');
+      // Force refresh of saved dashboards list
+      window.dispatchEvent(new CustomEvent('refresh-dashboards'));
+    } catch (error) {
+      console.error('Error deleting dashboard:', error);
+      toast.error('Failed to delete dashboard');
+    }
+  };
 
   return (
     <aside className="w-72 h-screen glass-sidebar flex flex-col p-6 hidden lg:flex relative z-50">
@@ -43,38 +61,65 @@ export default function Sidebar() {
         <NavItem icon={<Share2 size={20} />} label="Integrations" />
       </div>
 
-      <div className="space-y-1 flex-1">
+      <div className="space-y-1 mb-10 overflow-hidden flex flex-col min-h-0">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Departments</p>
-        {departments.map((dept) => (
-          <button
-            key={dept.id}
-            onClick={() => setDepartment(dept.id)}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
-              department === dept.id 
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+        <div className="space-y-1 overflow-y-auto">
+          {departments.map((dept) => (
+            <button
+              key={dept.id}
+              onClick={() => setDepartment(dept.id)}
+              className={cn(
+                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
+                department === dept.id 
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+              )}
+            >
+              <dept.icon size={20} className={cn(
+                "transition-colors",
+                department === dept.id ? "text-primary-foreground" : "group-hover:text-primary"
+              )} />
+              <span className="text-sm font-semibold">{dept.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1 flex-1 min-h-0 flex flex-col overflow-hidden mb-6">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Saved Views</p>
+        <ScrollArea className="flex-1 -mx-2 px-2">
+          <div className="space-y-1">
+            {savedDashboards.length > 0 ? (
+              savedDashboards.map((dash) => (
+                <div key={dash.id} className="group/item relative">
+                  <button
+                    onClick={() => loadDashboard(dash.id)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all group"
+                  >
+                    <FileText size={16} className="group-hover:text-primary transition-colors" />
+                    <div className="flex flex-col items-start overflow-hidden">
+                      <span className="text-sm font-medium truncate w-full pr-6">{dash.name}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{dash.department}</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => deleteDashboard(e, dash.id)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 p-1 hover:bg-destructive/10 hover:text-destructive rounded transition-all"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="text-[10px] text-muted-foreground px-4 py-2 italic">No saved dashboards yet.</p>
             )}
-          >
-            <dept.icon size={20} className={cn(
-              "transition-colors",
-              department === dept.id ? "text-primary-foreground" : "group-hover:text-primary"
-            )} />
-            <span className="text-sm font-semibold">{dept.label}</span>
-          </button>
-        ))}
+          </div>
+        </ScrollArea>
       </div>
       
       <div className="pt-6 border-t border-white/5 space-y-1">
         <NavItem icon={<Settings size={20} />} label="System Settings" />
         <NavItem icon={<HelpCircle size={20} />} label="Support Center" />
-        
-        <div className="mt-6 p-4 rounded-xl bg-primary/10 border border-primary/20">
-          <p className="text-xs font-bold text-primary mb-1">Enterprise Plan</p>
-          <p className="text-[10px] text-muted-foreground leading-tight">
-            Universal features enabled for all departments.
-          </p>
-        </div>
       </div>
     </aside>
   );

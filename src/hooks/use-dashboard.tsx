@@ -1,7 +1,9 @@
-import { useState, createContext, useContext } from 'react';
+import { useState, createContext, useContext, useEffect } from 'react';
 import { DollarSign, ShoppingCart, Users, TrendingUp, Briefcase, Target, Cpu, Shield, Zap, Globe, Heart, Clock } from 'lucide-react';
 import { KPIData } from '../components/dashboard/KPISection';
 import { WidgetConfig } from '../components/dashboard/WidgetGrid';
+import { blink } from '../lib/blink';
+import { toast } from 'react-hot-toast';
 
 export type Department = 'Sales' | 'HR' | 'IT' | 'Marketing';
 
@@ -10,6 +12,11 @@ interface DashboardContextType {
   setDepartment: (dept: Department) => void;
   kpis: KPIData[];
   widgets: WidgetConfig[];
+  setWidgets: React.Dispatch<React.SetStateAction<WidgetConfig[]>>;
+  saveDashboard: (name: string) => Promise<void>;
+  loadDashboard: (id: string) => Promise<void>;
+  savedDashboards: any[];
+  isLoading: boolean;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -68,11 +75,88 @@ const DEPT_DATA: Record<Department, { kpis: KPIData[], widgets: WidgetConfig[] }
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [department, setDepartment] = useState<Department>('Sales');
+  const [widgets, setWidgets] = useState<WidgetConfig[]>(DEPT_DATA['Sales'].widgets);
+  const [savedDashboards, setSavedDashboards] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { kpis, widgets } = DEPT_DATA[department];
+  const kpis = DEPT_DATA[department].kpis;
+
+  // Initial load of default widgets when department changes
+  useEffect(() => {
+    setWidgets(DEPT_DATA[department].widgets);
+  }, [department]);
+
+  const fetchSavedDashboards = async () => {
+    try {
+      const dashboards = await blink.db.dashboards.list();
+      setSavedDashboards(dashboards || []);
+    } catch (error) {
+      console.error('Error fetching dashboards:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSavedDashboards();
+
+    const handleRefresh = () => fetchSavedDashboards();
+    window.addEventListener('refresh-dashboards', handleRefresh);
+    return () => window.removeEventListener('refresh-dashboards', handleRefresh);
+  }, []);
+
+  const saveDashboard = async (name: string) => {
+    setIsLoading(true);
+    try {
+      const user = await blink.auth.me();
+      if (!user) throw new Error('User not authenticated');
+
+      const config = JSON.stringify({ widgets });
+      await blink.db.dashboards.create({
+        user_id: user.id,
+        name,
+        department,
+        config
+      });
+      
+      toast.success('Dashboard saved successfully');
+      fetchSavedDashboards();
+    } catch (error) {
+      console.error('Error saving dashboard:', error);
+      toast.error('Failed to save dashboard');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadDashboard = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const dashboard = await blink.db.dashboards.get({ id });
+      if (dashboard) {
+        const config = JSON.parse(dashboard.config);
+        setWidgets(config.widgets);
+        setDepartment(dashboard.department as Department);
+        toast.success(`Loaded dashboard: ${dashboard.name}`);
+      }
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+      toast.error('Failed to load dashboard');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <DashboardContext.Provider value={{ department, setDepartment, kpis, widgets }}>
+    <DashboardContext.Provider value={{ 
+      department, 
+      setDepartment, 
+      kpis, 
+      widgets, 
+      setWidgets, 
+      saveDashboard, 
+      loadDashboard, 
+      savedDashboards, 
+      isLoading 
+    }}>
       {children}
     </DashboardContext.Provider>
   );

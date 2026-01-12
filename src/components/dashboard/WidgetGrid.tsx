@@ -5,12 +5,16 @@ import {
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Maximize2, MoreHorizontal, ArrowUpRight, Table as TableIcon } from 'lucide-react';
+import { Maximize2, MoreHorizontal, ArrowUpRight, Table as TableIcon, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export type WidgetType = 'area' | 'bar' | 'pie' | 'line' | 'stacked-bar' | 'multi-line';
 
@@ -29,18 +33,34 @@ export interface WidgetConfig {
 
 interface WidgetGridProps {
   widgets: WidgetConfig[];
+  onUpdate?: (widgets: WidgetConfig[]) => void;
 }
 
 const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
-export default function WidgetGrid({ widgets }: WidgetGridProps) {
+export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
   const [selectedWidget, setSelectedWidget] = useState<WidgetConfig | null>(null);
+  const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
+
+  const handleDelete = (id: string) => {
+    if (onUpdate) {
+      onUpdate(widgets.filter(w => w.id !== id));
+    }
+  };
+
+  const handleEditSave = () => {
+    if (editingWidget && onUpdate) {
+      onUpdate(widgets.map(w => w.id === editingWidget.id ? editingWidget : w));
+      setEditingWidget(null);
+    }
+  };
 
   return (
     <div className="grid grid-cols-12 gap-6">
       {widgets.map((widget, index) => (
         <motion.div
           key={widget.id}
+          layout
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
@@ -65,9 +85,24 @@ export default function WidgetGrid({ widgets }: WidgetGridProps) {
                 >
                   <Maximize2 size={14} className="text-muted-foreground" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5">
-                  <MoreHorizontal size={14} className="text-muted-foreground" />
-                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5">
+                      <MoreHorizontal size={14} className="text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="glass-card border-white/10">
+                    <DropdownMenuItem onClick={() => setEditingWidget(widget)} className="gap-2">
+                      <Edit2 size={14} />
+                      Edit Widget
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(widget.id)} className="gap-2 text-destructive focus:text-destructive">
+                      <Trash2 size={14} />
+                      Remove Widget
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardHeader>
             <CardContent className="h-[300px] mt-2 relative">
@@ -136,6 +171,75 @@ export default function WidgetGrid({ widgets }: WidgetGridProps) {
                 </div>
               </div>
             </div>
+          </DialogContent>
+        )}
+      </Dialog>
+
+      <Dialog open={!!editingWidget} onOpenChange={() => setEditingWidget(null)}>
+        {editingWidget && (
+          <DialogContent className="glass-card border-white/10">
+            <DialogHeader>
+              <DialogTitle>Edit Widget Configuration</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input 
+                  value={editingWidget.title} 
+                  onChange={e => setEditingWidget({...editingWidget, title: e.target.value})}
+                  className="bg-white/5 border-white/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input 
+                  value={editingWidget.description} 
+                  onChange={e => setEditingWidget({...editingWidget, description: e.target.value})}
+                  className="bg-white/5 border-white/10"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Chart Type</Label>
+                  <Select 
+                    value={editingWidget.type} 
+                    onValueChange={(val: WidgetType) => setEditingWidget({...editingWidget, type: val})}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="glass-card border-white/10">
+                      <SelectItem value="area">Area Chart</SelectItem>
+                      <SelectItem value="bar">Bar Chart</SelectItem>
+                      <SelectItem value="stacked-bar">Stacked Bar Chart</SelectItem>
+                      <SelectItem value="line">Line Chart</SelectItem>
+                      <SelectItem value="pie">Pie Chart</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Grid Span</Label>
+                  <Select 
+                    value={String(editingWidget.gridSpan || 6)} 
+                    onValueChange={(val) => setEditingWidget({...editingWidget, gridSpan: parseInt(val)})}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="glass-card border-white/10">
+                      <SelectItem value="4">Small (1/3)</SelectItem>
+                      <SelectItem value="6">Medium (1/2)</SelectItem>
+                      <SelectItem value="8">Large (2/3)</SelectItem>
+                      <SelectItem value="12">Full Width</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingWidget(null)} className="glass">Cancel</Button>
+              <Button onClick={handleEditSave}>Save Changes</Button>
+            </DialogFooter>
           </DialogContent>
         )}
       </Dialog>
