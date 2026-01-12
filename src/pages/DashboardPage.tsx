@@ -3,6 +3,7 @@ import Shell from '../components/layout/Shell';
 import KPISection from '../components/dashboard/KPISection';
 import WidgetGrid, { WidgetConfig, WidgetType } from '../components/dashboard/WidgetGrid';
 import AIInsight from '../components/dashboard/AIInsight';
+import LiveSimulator from '../components/dashboard/LiveSimulator';
 import TemplateGallery from '../components/dashboard/TemplateGallery';
 import { useDashboard } from '../hooks/use-dashboard';
 import { Plus, Filter, Calendar, Layout, Save, Download } from 'lucide-react';
@@ -36,7 +37,9 @@ export default function DashboardPage() {
     gridSpan: 6,
     data: [{ name: 'A', value: 10 }, { name: 'B', value: 20 }, { name: 'C', value: 30 }],
     dataKey: 'value',
-    categoryKey: 'name'
+    categoryKey: 'name',
+    goal: 100,
+    forecast: false
   });
 
   const handleSave = async () => {
@@ -123,8 +126,9 @@ export default function DashboardPage() {
             <div className="col-span-12 lg:col-span-8">
               <WidgetGrid widgets={widgets} onUpdate={setWidgets} />
             </div>
-            <div className="col-span-12 lg:col-span-4">
+            <div className="col-span-12 lg:col-span-4 space-y-6">
               <AIInsight />
+              <LiveSimulator />
             </div>
           </div>
         </div>
@@ -203,6 +207,8 @@ export default function DashboardPage() {
                     <SelectItem value="stacked-bar">Stacked Bar Chart</SelectItem>
                     <SelectItem value="line">Line Chart</SelectItem>
                     <SelectItem value="pie">Pie Chart</SelectItem>
+                    <SelectItem value="gauge">Goal Gauge</SelectItem>
+                    <SelectItem value="progress">Goal Progress</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -224,6 +230,31 @@ export default function DashboardPage() {
                 </Select>
               </div>
             </div>
+
+            {(newWidget.type === 'gauge' || newWidget.type === 'progress') && (
+              <div className="space-y-2">
+                <Label>Goal Target</Label>
+                <Input 
+                  type="number"
+                  value={newWidget.goal}
+                  onChange={(e) => setNewWidget({...newWidget, goal: parseInt(e.target.value)})}
+                  className="bg-white/5 border-white/10"
+                />
+              </div>
+            )}
+
+            {(newWidget.type === 'area' || newWidget.type === 'line' || newWidget.type === 'bar') && (
+              <div className="flex items-center space-x-2 py-2">
+                <input 
+                  type="checkbox" 
+                  id="forecast" 
+                  checked={newWidget.forecast}
+                  onChange={(e) => setNewWidget({...newWidget, forecast: e.target.checked})}
+                  className="rounded border-white/10 bg-white/5"
+                />
+                <Label htmlFor="forecast" className="cursor-pointer">Enable AI-Powered Forecasting</Label>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddWidgetDialog(false)} className="glass">Cancel</Button>

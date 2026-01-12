@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, Legend
+  BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
+import { Progress } from '../ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize2, MoreHorizontal, ArrowUpRight, Table as TableIcon, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -16,7 +17,7 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-export type WidgetType = 'area' | 'bar' | 'pie' | 'line' | 'stacked-bar' | 'multi-line';
+export type WidgetType = 'area' | 'bar' | 'pie' | 'line' | 'stacked-bar' | 'multi-line' | 'gauge' | 'progress';
 
 export interface WidgetConfig {
   id: string;
@@ -29,6 +30,8 @@ export interface WidgetConfig {
   gridSpan?: number; // 1-12
   colors?: string[];
   stack?: boolean;
+  goal?: number;
+  forecast?: boolean;
 }
 
 interface WidgetGridProps {
@@ -282,10 +285,17 @@ function renderChart(widget: WidgetConfig) {
   const colors = widget.colors || DEFAULT_COLORS;
   const dataKeys = Array.isArray(widget.dataKey) ? widget.dataKey : [widget.dataKey];
   
+  // Forecast processing: split data into actual and forecast if requested
+  const chartData = widget.forecast ? widget.data.map((d, i) => ({
+    ...d,
+    // If it's the last 30% of data, it's forecast
+    isForecast: i > widget.data.length * 0.7
+  })) : widget.data;
+
   switch (widget.type) {
     case 'area':
       return (
-        <AreaChart data={widget.data}>
+        <AreaChart data={chartData}>
           <defs>
             {dataKeys.map((key, i) => (
               <linearGradient key={key} id={`gradient-${widget.id}-${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -320,6 +330,7 @@ function renderChart(widget: WidgetConfig) {
               fillOpacity={1} 
               fill={`url(#gradient-${widget.id}-${i})`} 
               strokeWidth={2} 
+              strokeDasharray={widget.forecast ? "5 5" : undefined}
               stackId={widget.stack ? "1" : undefined}
             />
           ))}
@@ -328,7 +339,7 @@ function renderChart(widget: WidgetConfig) {
     case 'bar':
     case 'stacked-bar':
       return (
-        <BarChart data={widget.data}>
+        <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff0a" />
           <XAxis dataKey={widget.categoryKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} dy={10} />
           <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
@@ -341,6 +352,7 @@ function renderChart(widget: WidgetConfig) {
               fill={colors[i % colors.length]} 
               radius={widget.type === 'bar' ? [4, 4, 0, 0] : [0, 0, 0, 0]} 
               stackId={widget.type === 'stacked-bar' ? "a" : undefined}
+              opacity={widget.forecast ? 0.6 : 1}
             />
           ))}
         </BarChart>
@@ -368,7 +380,7 @@ function renderChart(widget: WidgetConfig) {
     case 'line':
     case 'multi-line':
       return (
-        <LineChart data={widget.data}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff0a" />
           <XAxis dataKey={widget.categoryKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} dy={10} />
           <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
@@ -380,12 +392,74 @@ function renderChart(widget: WidgetConfig) {
               dataKey={key} 
               stroke={colors[i % colors.length]} 
               strokeWidth={3} 
+              strokeDasharray={widget.forecast ? "5 5" : undefined}
               dot={{ r: 4, fill: colors[i % colors.length], strokeWidth: 2, stroke: '#09090b' }} 
               activeDot={{ r: 6, strokeWidth: 0 }} 
             />
           ))}
         </LineChart>
       );
+    case 'gauge': {
+      const value = widget.data[0][dataKeys[0]];
+      const goal = widget.goal || 100;
+      const percentage = Math.min(100, (value / goal) * 100);
+      const gaugeData = [
+        { name: 'Value', value: percentage },
+        { name: 'Remaining', value: 100 - percentage }
+      ];
+      return (
+        <div className="flex flex-col items-center justify-center h-full pt-4">
+          <PieChart width={240} height={120}>
+            <Pie
+              data={gaugeData}
+              cx="50%"
+              cy="100%"
+              startAngle={180}
+              endAngle={0}
+              innerRadius={70}
+              outerRadius={90}
+              paddingAngle={0}
+              dataKey="value"
+            >
+              <Cell fill={colors[0]} />
+              <Cell fill="rgba(255,255,255,0.05)" />
+            </Pie>
+          </PieChart>
+          <div className="text-center -mt-4">
+            <div className="text-3xl font-bold">{value.toLocaleString()}{widget.dataKey === 'percentage' ? '%' : ''}</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+              Goal: {goal.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    case 'progress': {
+      const value = widget.data[0][dataKeys[0]];
+      const goal = widget.goal || 100;
+      const percentage = Math.min(100, (value / goal) * 100);
+      return (
+        <div className="flex flex-col justify-center h-full px-4 space-y-6">
+          <div className="space-y-2">
+            <div className="flex justify-between items-end">
+              <span className="text-2xl font-bold">{value.toLocaleString()}</span>
+              <span className="text-xs text-muted-foreground">Goal: {goal.toLocaleString()}</span>
+            </div>
+            <Progress value={percentage} className="h-3 bg-white/5" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="glass-card p-3 border-white/5 bg-white/5 rounded-xl">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Completion</div>
+              <div className="text-lg font-bold text-indigo-400">{percentage.toFixed(1)}%</div>
+            </div>
+            <div className="glass-card p-3 border-white/5 bg-white/5 rounded-xl">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Remaining</div>
+              <div className="text-lg font-bold text-emerald-400">{(goal - value).toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
     default:
       return <div>Unsupported chart type</div>;
   }

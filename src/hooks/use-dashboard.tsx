@@ -17,6 +17,7 @@ interface DashboardContextType {
   loadDashboard: (id: string) => Promise<void>;
   savedDashboards: any[];
   isLoading: boolean;
+  publishMetricUpdate: (data: any) => Promise<void>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -32,6 +33,7 @@ const DEPT_DATA: Record<Department, { kpis: KPIData[], widgets: WidgetConfig[] }
     widgets: [
       { id: 'revenue-trend', type: 'area', title: 'Revenue Distribution', description: 'Monthly growth across enterprise and SME segments', dataKey: ['Enterprise', 'SME'], categoryKey: 'name', gridSpan: 8, data: [{ name: 'Jan', Enterprise: 45000, SME: 12000 }, { name: 'Feb', Enterprise: 52000, SME: 15000 }, { name: 'Mar', Enterprise: 48000, SME: 14000 }, { name: 'Apr', Enterprise: 61000, SME: 18000 }, { name: 'May', Enterprise: 55000, SME: 17000 }, { name: 'Jun', Enterprise: 67000, SME: 21000 }, { name: 'Jul', Enterprise: 72000, SME: 25000 }] },
       { id: 'customer-segments', type: 'pie', title: 'Customer Segments', description: 'Revenue split by company size', dataKey: 'value', categoryKey: 'name', gridSpan: 4, data: [{ name: 'Enterprise', value: 45 }, { name: 'Mid-Market', value: 30 }, { name: 'SME', value: 25 }] },
+      { id: 'sales-forecast', type: 'area', title: 'Revenue Forecast', description: 'AI-projected revenue growth for the next quarter', dataKey: 'Revenue', categoryKey: 'month', gridSpan: 12, forecast: true, data: [{ month: 'Jan', Revenue: 45000 }, { month: 'Feb', Revenue: 52000 }, { month: 'Mar', Revenue: 48000 }, { month: 'Apr', Revenue: 61000 }, { month: 'May', Revenue: 65000 }, { month: 'Jun', Revenue: 72000 }, { month: 'Jul', Revenue: 78000 }, { month: 'Aug', Revenue: 85000 }, { month: 'Sep', Revenue: 92000 }] },
       { id: 'sales-by-channel', type: 'stacked-bar', title: 'Sales by Channel', description: 'Performance comparison across all sales channels', dataKey: ['Direct', 'Channel', 'Online'], categoryKey: 'month', gridSpan: 12, data: [{ month: 'Jan', Direct: 400, Channel: 240, Online: 200 }, { month: 'Feb', Direct: 300, Channel: 139, Online: 221 }, { month: 'Mar', Direct: 200, Channel: 980, Online: 229 }, { month: 'Apr', Direct: 278, Channel: 390, Online: 200 }, { month: 'May', Direct: 189, Channel: 480, Online: 218 }, { month: 'Jun', Direct: 239, Channel: 380, Online: 250 }] },
     ]
   },
@@ -55,6 +57,7 @@ const DEPT_DATA: Record<Department, { kpis: KPIData[], widgets: WidgetConfig[] }
       { title: 'Ticket Resolution', value: '92%', trend: '+3.4%', trendType: 'up', icon: Target, description: 'Percentage of support tickets resolved within SLA.' },
     ],
     widgets: [
+      { id: 'uptime-goal', type: 'gauge', title: 'Uptime Commitment', description: 'Real-time uptime vs 99.99% SLA target', dataKey: 'uptime', categoryKey: 'name', gridSpan: 4, goal: 99.99, data: [{ name: 'Current', uptime: 99.95 }] },
       { id: 'system-load', type: 'area', title: 'Infrastructure Load', description: 'CPU and Memory utilization over last 24 hours', dataKey: 'usage', categoryKey: 'time', gridSpan: 8, data: [{ time: '00:00', usage: 30 }, { time: '04:00', usage: 25 }, { time: '08:00', usage: 65 }, { time: '12:00', usage: 85 }, { time: '16:00', usage: 75 }, { time: '20:00', usage: 45 }] },
       { id: 'incident-types', type: 'bar', title: 'Incident Categories', description: 'Distribution of reported IT incidents', dataKey: 'count', categoryKey: 'type', gridSpan: 4, data: [{ type: 'Access', count: 45 }, { type: 'Hardware', count: 32 }, { type: 'Software', count: 67 }, { type: 'Network', count: 21 }] },
     ]
@@ -76,15 +79,78 @@ const DEPT_DATA: Record<Department, { kpis: KPIData[], widgets: WidgetConfig[] }
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [department, setDepartment] = useState<Department>('Sales');
   const [widgets, setWidgets] = useState<WidgetConfig[]>(DEPT_DATA['Sales'].widgets);
+  const [kpis, setKpis] = useState<KPIData[]>(DEPT_DATA['Sales'].kpis);
   const [savedDashboards, setSavedDashboards] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  const kpis = DEPT_DATA[department].kpis;
 
   // Initial load of default widgets when department changes
   useEffect(() => {
     setWidgets(DEPT_DATA[department].widgets);
+    setKpis(DEPT_DATA[department].kpis);
   }, [department]);
+
+  // Real-time Metrics Subscription
+  useEffect(() => {
+    let channel: any = null;
+    let mounted = true;
+
+    const setupRealtime = async () => {
+      try {
+        const user = await blink.auth.me();
+        if (!user || !mounted) return;
+
+        channel = blink.realtime.channel(`metrics-${department}`);
+        await channel.subscribe({
+          userId: user.id,
+          metadata: { department }
+        });
+
+        if (!mounted) return;
+
+        channel.onMessage((msg: any) => {
+          if (!mounted) return;
+          
+          if (msg.type === 'kpi-update') {
+            setKpis(prev => prev.map(kpi => 
+              kpi.title === msg.data.title ? { ...kpi, value: msg.data.value, trend: msg.data.trend } : kpi
+            ));
+            toast.success(`Live Update: ${msg.data.title}`, { duration: 2000, position: 'bottom-right' });
+          }
+
+          if (msg.type === 'widget-data-update') {
+            setWidgets(prev => prev.map(widget => 
+              widget.id === msg.data.widgetId ? { ...widget, data: msg.data.newData } : widget
+            ));
+          }
+        });
+
+      } catch (error) {
+        console.error('Realtime setup error:', error);
+      }
+    };
+
+    setupRealtime();
+
+    return () => {
+      mounted = false;
+      if (channel) channel.unsubscribe();
+    };
+  }, [department]);
+
+  const publishMetricUpdate = async (data: any) => {
+    try {
+      const user = await blink.auth.me();
+      if (!user) return;
+      
+      const channel = blink.realtime.channel(`metrics-${department}`);
+      await channel.publish(data.type, data.payload, {
+        userId: user.id,
+        metadata: { department }
+      });
+    } catch (error) {
+      console.error('Failed to publish update:', error);
+    }
+  };
 
   const fetchSavedDashboards = async () => {
     try {
@@ -155,7 +221,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       saveDashboard, 
       loadDashboard, 
       savedDashboards, 
-      isLoading 
+      isLoading,
+      publishMetricUpdate
     }}>
       {children}
     </DashboardContext.Provider>
