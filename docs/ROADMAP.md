@@ -62,40 +62,60 @@ A comprehensive 5-phase strategic plan for evolving the Universal Dashboard Engi
 
 ---
 
-## Phase 4: Advanced Analytics & Edge Computing
-*Pushing the boundaries of performance and real-time data processing.*
+## Phase 4: Advanced Data Connectivity
+*Transitioning from static datasets to dynamic, live enterprise data ingestion.*
 
-### 4.1 Real-time Streaming Architecture
-- Integrate Supabase Realtime for live dashboard updates (e.g., live sales monitoring).
-- Optimize WebSockets for low-latency metric synchronization across multiple users.
-- Implement edge caching for frequently accessed dashboard views to reduce latency.
+### 4.1 Live Webhook Ingestion
+- Implement a dedicated webhook listener for real-time data pushes from external platforms.
+- Create a transformation layer to map incoming webhook payloads to the universal dashboard schema.
+- Add support for secret headers and signature verification for secure ingestion.
 
-### 4.2 Predictive Insights & Modeling
-- Introduce forecasting components based on historical data trends.
-- Add "Goal Tracking" and "Pacing" widgets with visual indicators (Progress bars, Gauges).
-- Implement ML-based sentiment analysis for qualitative data (e.g., HR feedback).
+### 4.2 CSV & Excel Parsing
+- Integrate high-performance client-side parsers for seamless CSV and Excel file uploads.
+- Build a "Schema Mapper" UI that allows users to manually map spreadsheet columns to widget attributes.
+- Optimize the `useDashboard` hook to handle large client-side data blobs without performance degradation.
 
-### 4.3 Global Performance Optimization
-- Implement aggressive code splitting and lazy loading for heavy chart libraries.
-- Optimize image and asset delivery using a global CDN.
-- Refine skeleton states and suspense boundaries for near-instant "perceived" performance.
+### 4.3 Automated Data Refresh
+- Implement a configurable polling mechanism for external JSON/API sources.
+- Add visual indicators for "Last Synced" and "Sync Status" on the dashboard UI.
+- Support delta-updates to minimize bandwidth and processing time for large datasets.
 
 ---
 
-## Phase 5: Ecosystem & Enterprise Integration
-*Becoming the central hub for enterprise intelligence and integration.*
+## Phase 5: Collaborative Analytics
+*Transforming isolated dashboards into shared workspaces for cross-functional alignment.*
 
-### 5.1 API Marketplace & Webhooks
-- Expose a public API for external systems to push data directly into the engine.
-- Implement outgoing webhooks for triggering external actions based on dashboard alerts.
-- Create a library of "Connectors" for popular SaaS platforms (Salesforce, Zendesk, Jira).
+### 5.1 Shared Workspaces
+- Implement "Organization" and "Team" levels of dashboard management.
+- Allow users to invite colleagues to view or edit specific dashboards via secure links.
+- Create a "Global Activity Feed" to track changes and updates across all shared views.
 
-### 5.2 White-labeling & Custom Branding
-- Allow enterprise clients to customize the platform's appearance (Logos, Colors, Fonts).
-- Implement a theme engine for dynamic HSL token generation based on brand guidelines.
-- Support custom domains for departmental dashboard deployments.
+### 5.2 Dashboard Commenting & Annotations
+- Build a contextual commenting system that allows users to leave notes on specific widgets.
+- Implement "Data Annotations" where users can mark specific data points (e.g., "Promotion launched here").
+- Support @mentions and email notifications for collaboration-driven alerts.
 
-### 5.3 Global Compliance & Scaling
-- Ensure platform compliance with SOC2, GDPR, and HIPAA for enterprise-grade security.
-- Implement multi-region database replication for high availability.
-- Finalize the enterprise "Audit Log" system to track every dashboard interaction and change.
+### 5.3 Role-Based Access Control (RBAC)
+- Implement granular permissions for viewing, editing, and exporting dashboards.
+- Add widget-level visibility controls based on user roles (e.g., "IT only" or "HR only").
+- Integrate with existing enterprise identity providers (SAML/SSO) for automated role mapping.
+
+---
+
+## Phase 6: Custom Widget SDK
+*Empowering advanced users to extend the dashboard engine with bespoke React components.*
+
+### 6.1 Schema-Driven Component Definitions
+- Finalize the Widget Specification Language (WSL) for defining custom React components via JSON.
+- Create a sandbox environment for developers to test and preview custom widgets safely.
+- Implement a registry of "Community Widgets" that can be shared across the organization.
+
+### 6.2 Advanced Interactivity & State
+- Expose a set of hooks and utilities for custom widgets to interact with the global dashboard state.
+- Support complex inputs (e.g., date pickers, dropdowns) within custom widget headers.
+- Enable cross-widget communication, allowing one custom widget to filter or update another.
+
+### 6.3 Performance & Security Isolation
+- Implement code-splitting for custom widget bundles to maintain fast initial load times.
+- Ensure strict sanitization and security boundaries for user-defined React components.
+- Develop a "Widget Performance Profiler" to help developers optimize their custom components.
