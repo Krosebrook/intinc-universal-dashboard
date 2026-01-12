@@ -5,14 +5,29 @@ import { blink } from '../../lib/blink';
 import { useDashboard } from '../../hooks/use-dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { WidgetConfig } from './WidgetGrid';
+import type { BlinkUser } from '@blinkdotnew/sdk';
 
 export default function AIInsight() {
   const { department, widgets } = useDashboard();
   const [insight, setInsight] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
+
+  // Track auth state
+  useEffect(() => {
+    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
+      setCurrentUser(state.user);
+    });
+    return unsubscribe;
+  }, []);
 
   const fetchInsight = async () => {
+    // AI API requires authentication - skip if not logged in
+    if (!currentUser?.id) {
+      setInsight('Sign in to unlock AI-powered insights for your dashboard data.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Create a simplified version of the data for the AI
@@ -35,15 +50,20 @@ export default function AIInsight() {
       setInsight(text);
     } catch (error) {
       console.error('AI Insight Error:', error);
-      setInsight('Unable to generate AI insights at this time. Please check your connection or try again later.');
+      setInsight('Unable to generate AI insights at this time. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInsight();
-  }, [department, widgets]); // Re-fetch if widgets change
+    // Only fetch insights when authenticated and widgets are available
+    if (currentUser?.id && widgets.length > 0) {
+      fetchInsight();
+    } else if (!currentUser?.id) {
+      setInsight('Sign in to unlock AI-powered insights for your dashboard data.');
+    }
+  }, [department, widgets, currentUser?.id]); // Re-fetch when auth state or data changes
 
   return (
     <Card className="bg-primary border-none shadow-2xl shadow-primary/20 relative overflow-hidden h-full min-h-[350px]">

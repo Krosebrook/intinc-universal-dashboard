@@ -220,18 +220,40 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     try {
       const dashboards = await blink.db.dashboards.list();
       setSavedDashboards(dashboards || []);
-    } catch (error) {
-      console.error('Error fetching dashboards:', error);
+    } catch (error: any) {
+      // Gracefully handle network errors for unauthenticated or transient failures
+      if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('Failed to fetch')) {
+        // Silently degrade - saved dashboards will just be empty
+        console.info('Dashboard fetch unavailable - using default views');
+        setSavedDashboards([]);
+      } else {
+        console.error('Error fetching dashboards:', error);
+      }
     }
   };
 
   // Fetch saved dashboards only when authenticated
   useEffect(() => {
-    fetchSavedDashboards();
+    // Add small delay to let auth state fully settle
+    const timer = setTimeout(() => {
+      if (currentUser?.id) {
+        fetchSavedDashboards();
+      } else {
+        setSavedDashboards([]);
+      }
+    }, 100);
 
-    const handleRefresh = () => fetchSavedDashboards();
+    const handleRefresh = () => {
+      if (currentUser?.id) {
+        fetchSavedDashboards();
+      }
+    };
     window.addEventListener('refresh-dashboards', handleRefresh);
-    return () => window.removeEventListener('refresh-dashboards', handleRefresh);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('refresh-dashboards', handleRefresh);
+    };
   }, [currentUser?.id]);
 
   const saveDashboard = async (name: string) => {
