@@ -2,12 +2,48 @@ import React from 'react';
 import Sidebar from '../dashboard/Sidebar';
 import { Button } from '../ui/button';
 import { blink } from '../../lib/blink';
-import { LogOut, Bell, User, Search, Activity } from 'lucide-react';
+import { LogOut, Bell, User, Search, Download, FileText } from 'lucide-react';
 import { Input } from '../ui/input';
 import { useDashboard } from '../../hooks/use-dashboard';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { toast } from 'sonner';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const { department } = useDashboard();
+
+  const handleExportPDF = async () => {
+    const dashboardElement = document.getElementById('dashboard-content');
+    if (!dashboardElement) {
+      toast.error('Dashboard content not found');
+      return;
+    }
+
+    const toastId = toast.loading('Generating high-fidelity PDF...');
+
+    try {
+      const canvas = await html2canvas(dashboardElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#050505',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width / 2, canvas.height / 2]
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`Intinc-${department}-Dashboard.pdf`);
+      toast.success('Dashboard exported successfully', { id: toastId });
+    } catch (error) {
+      console.error('Export Error:', error);
+      toast.error('Failed to export dashboard', { id: toastId });
+    }
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -34,6 +70,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleExportPDF}
+                className="hidden lg:flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-xl px-3"
+              >
+                <FileText size={16} />
+                <span>Export PDF</span>
+              </Button>
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-xl">
                 <Bell size={20} />
               </Button>
@@ -62,7 +107,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         </header>
         
         <main className="flex-1 overflow-y-auto bg-[#050505] p-8 scrollbar-hide">
-          <div className="max-w-7xl mx-auto space-y-8">
+          <div id="dashboard-content" className="max-w-7xl mx-auto space-y-8 p-4 bg-[#050505]">
             {children}
           </div>
         </main>
