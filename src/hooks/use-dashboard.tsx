@@ -4,6 +4,7 @@ import { KPIData } from '../components/dashboard/KPISection';
 import { WidgetConfig } from '../components/dashboard/WidgetGrid';
 import { blink } from '../lib/blink';
 import { toast } from 'react-hot-toast';
+import type { BlinkUser } from '@blinkdotnew/sdk';
 
 export type Department = 'Sales' | 'HR' | 'IT' | 'Marketing';
 
@@ -83,6 +84,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [kpis, setKpis] = useState<KPIData[]>(DEPT_DATA['Sales'].kpis);
   const [savedDashboards, setSavedDashboards] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
+
+  // Track auth state to gate auth-required operations
+  useEffect(() => {
+    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
+      setCurrentUser(state.user);
+    });
+    return unsubscribe;
+  }, []);
 
   // Initial load of default widgets when department changes
   useEffect(() => {
@@ -90,19 +100,19 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     setKpis(DEPT_DATA[department].kpis);
   }, [department]);
 
-  // Real-time Metrics Subscription
+  // Real-time Metrics Subscription - only when authenticated
   useEffect(() => {
+    // Don't setup realtime if user is not authenticated
+    if (!currentUser?.id) return;
+
     let channel: any = null;
     let mounted = true;
 
     const setupRealtime = async () => {
       try {
-        const user = await blink.auth.me();
-        if (!user || !mounted) return;
-
         channel = blink.realtime.channel(`metrics-${department}`);
         await channel.subscribe({
-          userId: user.id,
+          userId: currentUser.id,
           metadata: { department }
         });
 
@@ -136,7 +146,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       if (channel) channel.unsubscribe();
     };
-  }, [department]);
+  }, [department, currentUser?.id]);
 
   const publishMetricUpdate = async (data: any) => {
     try {
@@ -171,6 +181,11 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   };
 
   const fetchSavedDashboards = async () => {
+    // Only fetch dashboards when user is authenticated
+    if (!currentUser?.id) {
+      setSavedDashboards([]);
+      return;
+    }
     try {
       const dashboards = await blink.db.dashboards.list();
       setSavedDashboards(dashboards || []);
@@ -179,13 +194,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Fetch saved dashboards only when authenticated
   useEffect(() => {
     fetchSavedDashboards();
 
     const handleRefresh = () => fetchSavedDashboards();
     window.addEventListener('refresh-dashboards', handleRefresh);
     return () => window.removeEventListener('refresh-dashboards', handleRefresh);
-  }, []);
+  }, [currentUser?.id]);
 
   const saveDashboard = async (name: string) => {
     setIsLoading(true);
