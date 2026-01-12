@@ -1,5 +1,6 @@
 import React from 'react';
 import Sidebar from '../dashboard/Sidebar';
+import EnterpriseSettings from '../dashboard/EnterpriseSettings';
 import { Button } from '../ui/button';
 import { blink } from '../../lib/blink';
 import { LogOut, Bell, User, Search, Download, FileText } from 'lucide-react';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const { department } = useDashboard();
+  const [showSettings, setShowSettings] = React.useState(false);
 
   const handleExportPDF = async () => {
     const dashboardElement = document.getElementById('dashboard-content');
@@ -47,7 +49,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <Sidebar />
+      <Sidebar onOpenSettings={() => setShowSettings(true)} />
       
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 glass sticky top-0 z-50">
@@ -112,6 +114,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+
+      <EnterpriseSettings open={showSettings} onOpenChange={setShowSettings} />
     </div>
   );
 }

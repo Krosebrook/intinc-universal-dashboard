@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart
+  BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart,
+  ScatterChart, Scatter, ZAxis
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
@@ -16,8 +17,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Switch } from '../ui/switch';
 
-export type WidgetType = 'area' | 'bar' | 'pie' | 'line' | 'stacked-bar' | 'multi-line' | 'gauge' | 'progress';
+export type WidgetType = 'area' | 'bar' | 'pie' | 'line' | 'stacked-bar' | 'multi-line' | 'gauge' | 'progress' | 'scatter';
 
 export interface WidgetConfig {
   id: string;
@@ -202,40 +204,63 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Chart Type</Label>
-                  <Select 
-                    value={editingWidget.type} 
-                    onValueChange={(val: WidgetType) => setEditingWidget({...editingWidget, type: val})}
-                  >
-                    <SelectTrigger className="bg-white/5 border-white/10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="glass-card border-white/10">
-                      <SelectItem value="area">Area Chart</SelectItem>
-                      <SelectItem value="bar">Bar Chart</SelectItem>
-                      <SelectItem value="stacked-bar">Stacked Bar Chart</SelectItem>
-                      <SelectItem value="line">Line Chart</SelectItem>
-                      <SelectItem value="pie">Pie Chart</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Chart Type</Label>
+                    <Select 
+                      value={editingWidget.type} 
+                      onValueChange={(val: WidgetType) => setEditingWidget({...editingWidget, type: val})}
+                    >
+                      <SelectTrigger className="bg-white/5 border-white/10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="glass-card border-white/10">
+                        <SelectItem value="area">Area Chart</SelectItem>
+                        <SelectItem value="bar">Bar Chart</SelectItem>
+                        <SelectItem value="stacked-bar">Stacked Bar Chart</SelectItem>
+                        <SelectItem value="line">Line Chart</SelectItem>
+                        <SelectItem value="pie">Pie Chart</SelectItem>
+                        <SelectItem value="scatter">Scatter Plot</SelectItem>
+                        <SelectItem value="gauge">Gauge</SelectItem>
+                        <SelectItem value="progress">Progress Bar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Grid Span</Label>
+                    <Select 
+                      value={String(editingWidget.gridSpan || 6)} 
+                      onValueChange={(val) => setEditingWidget({...editingWidget, gridSpan: parseInt(val)})}
+                    >
+                      <SelectTrigger className="bg-white/5 border-white/10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="glass-card border-white/10">
+                        <SelectItem value="4">Small (1/3)</SelectItem>
+                        <SelectItem value="6">Medium (1/2)</SelectItem>
+                        <SelectItem value="8">Large (2/3)</SelectItem>
+                        <SelectItem value="12">Full Width</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Switch 
+                      id="forecast-mode" 
+                      checked={editingWidget.forecast} 
+                      onCheckedChange={(val) => setEditingWidget({...editingWidget, forecast: val})}
+                    />
+                    <Label htmlFor="forecast-mode">Enable AI Forecast</Label>
+                  </div>
                 </div>
+                
                 <div className="space-y-2">
-                  <Label>Grid Span</Label>
-                  <Select 
-                    value={String(editingWidget.gridSpan || 6)} 
-                    onValueChange={(val) => setEditingWidget({...editingWidget, gridSpan: parseInt(val)})}
-                  >
-                    <SelectTrigger className="bg-white/5 border-white/10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="glass-card border-white/10">
-                      <SelectItem value="4">Small (1/3)</SelectItem>
-                      <SelectItem value="6">Medium (1/2)</SelectItem>
-                      <SelectItem value="8">Large (2/3)</SelectItem>
-                      <SelectItem value="12">Full Width</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Live Preview</Label>
+                  <div className="h-[180px] w-full border border-white/10 rounded-xl bg-white/5 overflow-hidden flex items-center justify-center p-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      {renderChart(editingWidget)}
+                    </ResponsiveContainer>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center">Changes reflect instantly in the builder</p>
                 </div>
               </div>
             </div>
@@ -398,6 +423,24 @@ function renderChart(widget: WidgetConfig) {
             />
           ))}
         </LineChart>
+      );
+    case 'scatter':
+      return (
+        <ScatterChart data={widget.data}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff0a" />
+          <XAxis dataKey={widget.categoryKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} dy={10} />
+          <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+          <ZAxis type="number" range={[60, 400]} />
+          <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+          {dataKeys.map((key, i) => (
+            <Scatter 
+              key={key} 
+              name={key} 
+              data={widget.data} 
+              fill={colors[i % colors.length]} 
+            />
+          ))}
+        </ScatterChart>
       );
     case 'gauge': {
       const value = widget.data[0][dataKeys[0]];

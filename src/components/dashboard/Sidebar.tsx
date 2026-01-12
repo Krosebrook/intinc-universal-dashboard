@@ -26,7 +26,7 @@ const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'Marketing', icon: PieChart, label: 'Marketing Ops' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const { department, setDepartment, savedDashboards, loadDashboard } = useDashboard();
 
   const deleteDashboard = async (e: React.MouseEvent, id: string) => {
@@ -58,7 +58,11 @@ export default function Sidebar() {
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Core Platform</p>
         <NavItem icon={<LayoutDashboard size={20} />} label="Global Overview" />
         <NavItem icon={<Database size={20} />} label="Data Explorer" />
-        <NavItem icon={<Share2 size={20} />} label="Integrations" />
+        <NavItem 
+          icon={<Share2 size={20} />} 
+          label="Integrations" 
+          onClick={onOpenSettings}
+        />
       </div>
 
       <div className="space-y-1 mb-10 overflow-hidden flex flex-col min-h-0">
@@ -118,19 +122,26 @@ export default function Sidebar() {
       </div>
       
       <div className="pt-6 border-t border-white/5 space-y-1">
-        <NavItem icon={<Settings size={20} />} label="System Settings" />
+        <NavItem 
+          icon={<Settings size={20} />} 
+          label="System Settings" 
+          onClick={onOpenSettings}
+        />
         <NavItem icon={<HelpCircle size={20} />} label="Support Center" />
       </div>
     </aside>
   );
 }
 
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
+function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
   return (
-    <button className={cn(
-      "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
-      active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-    )}>
+    <button 
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
+        active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+      )}
+    >
       <div className={cn(
         "transition-colors",
         active ? "text-primary-foreground" : "group-hover:text-primary"

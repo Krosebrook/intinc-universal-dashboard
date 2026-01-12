@@ -18,6 +18,7 @@ interface DashboardContextType {
   savedDashboards: any[];
   isLoading: boolean;
   publishMetricUpdate: (data: any) => Promise<void>;
+  logAction: (action: string, entity: string, entityId?: string, metadata?: any) => Promise<void>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -152,6 +153,23 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const logAction = async (action: string, entity: string, entityId?: string, metadata?: any) => {
+    try {
+      const user = await blink.auth.me();
+      if (!user) return;
+
+      await blink.db.auditLogs.create({
+        user_id: user.id,
+        action,
+        entity,
+        entity_id: entityId,
+        metadata: metadata ? JSON.stringify(metadata) : null
+      });
+    } catch (error) {
+      console.error('Failed to log action:', error);
+    }
+  };
+
   const fetchSavedDashboards = async () => {
     try {
       const dashboards = await blink.db.dashboards.list();
@@ -222,7 +240,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       loadDashboard, 
       savedDashboards, 
       isLoading,
-      publishMetricUpdate
+      publishMetricUpdate,
+      logAction
     }}>
       {children}
     </DashboardContext.Provider>
