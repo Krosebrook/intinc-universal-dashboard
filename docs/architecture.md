@@ -5,6 +5,12 @@ The Intinc Universal Dashboard is built on a high-fidelity, schema-driven UI pat
 ## Core Philosophy: Schema-Driven UI
 The entire dashboard interface is dynamic. Rather than hard-coding views, the platform interprets a **Dashboard Configuration Schema** (JSON) to render widgets, layout grids, and data connections. This allows for instant updates and "no-code" customization by different departments.
 
+### The Schema Lifecycle
+1. **Definition**: Dashboards are defined as a hierarchical JSON object containing layout metadata and widget specifications.
+2. **Interpretation**: The `WidgetGrid` component parses the schema to determine grid spans, chart types, and data sources.
+3. **Data Mapping**: Raw data is mapped to specific widget attributes (e.g., `xKey`, `yKey`, `value`) based on the schema's mapping instructions.
+4. **Rendering**: Dynamic React components are instantiated with the processed data, allowing for a fully configurable UI.
+
 ## Frontend Stack
 - **Framework**: Vite + React + TypeScript (for type-safe schema validation)
 - **Styling**: Tailwind CSS for high-performance, atomic styling
