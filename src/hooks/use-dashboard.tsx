@@ -363,7 +363,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       if (!user) return;
 
       await blink.db.workspaces.create({
-        owner_id: user.id,
+        userId: user.id,
+        ownerId: user.id,
         name
       });
       fetchWorkspaces();
