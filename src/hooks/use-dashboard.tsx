@@ -101,12 +101,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   }, [department]);
 
   // Real-time Metrics Subscription - only when authenticated
+  // Note: Realtime is optional for dashboard functionality - gracefully degrade if unavailable
   useEffect(() => {
     // Don't setup realtime if user is not authenticated
     if (!currentUser?.id) return;
 
     let channel: any = null;
     let mounted = true;
+    let retryCount = 0;
+    const MAX_RETRIES = 2;
+    const RETRY_DELAY = 3000;
 
     const setupRealtime = async () => {
       try {
@@ -135,16 +139,43 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           }
         });
 
-      } catch (error) {
-        console.error('Realtime setup error:', error);
+      } catch (error: any) {
+        // Handle WebSocket connection errors gracefully
+        // The dashboard works without realtime - it's an optional enhancement
+        if (error?.code === 'REALTIME_ERROR' || error?.message?.includes('timeout')) {
+          // Only retry a limited number of times to avoid spam
+          if (retryCount < MAX_RETRIES && mounted) {
+            retryCount++;
+            console.info(`Realtime connection attempt ${retryCount}/${MAX_RETRIES} failed, retrying in ${RETRY_DELAY/1000}s...`);
+            setTimeout(() => {
+              if (mounted) setupRealtime();
+            }, RETRY_DELAY);
+          } else {
+            // Silently degrade - realtime updates won't be available but dashboard works
+            console.info('Realtime updates unavailable - dashboard will use static data');
+          }
+        } else {
+          // Log unexpected errors for debugging
+          console.warn('Realtime setup warning:', error?.message || error);
+        }
       }
     };
 
-    setupRealtime();
+    // Delay initial connection to let auth settle
+    const initTimer = setTimeout(() => {
+      if (mounted) setupRealtime();
+    }, 500);
 
     return () => {
       mounted = false;
-      if (channel) channel.unsubscribe();
+      clearTimeout(initTimer);
+      if (channel) {
+        try {
+          channel.unsubscribe();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
     };
   }, [department, currentUser?.id]);
 
