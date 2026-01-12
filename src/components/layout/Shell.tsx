@@ -3,11 +3,10 @@ import Sidebar from '../dashboard/Sidebar';
 import EnterpriseSettings from '../dashboard/EnterpriseSettings';
 import { Button } from '../ui/button';
 import { blink } from '../../lib/blink';
-import { LogOut, Bell, User, Search, Download, FileText } from 'lucide-react';
+import { LogOut, Bell, User, Search, FileText } from 'lucide-react';
 import { Input } from '../ui/input';
 import { useDashboard } from '../../hooks/use-dashboard';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { exportToPdf } from '../../lib/export';
 import { toast } from 'sonner';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
@@ -15,31 +14,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const [showSettings, setShowSettings] = React.useState(false);
 
   const handleExportPDF = async () => {
-    const dashboardElement = document.getElementById('dashboard-content');
-    if (!dashboardElement) {
-      toast.error('Dashboard content not found');
-      return;
-    }
-
     const toastId = toast.loading('Generating high-fidelity PDF...');
-
     try {
-      const canvas = await html2canvas(dashboardElement, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#050505',
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
-        format: [canvas.width / 2, canvas.height / 2]
-      });
-
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
-      pdf.save(`Intinc-${department}-Dashboard.pdf`);
+      await exportToPdf('dashboard-content', `Intinc-${department}-Dashboard.pdf`);
       toast.success('Dashboard exported successfully', { id: toastId });
     } catch (error) {
       console.error('Export Error:', error);

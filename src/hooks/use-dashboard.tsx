@@ -16,10 +16,17 @@ interface DashboardContextType {
   setWidgets: React.Dispatch<React.SetStateAction<WidgetConfig[]>>;
   saveDashboard: (name: string) => Promise<void>;
   loadDashboard: (id: string) => Promise<void>;
+  deleteDashboard: (id: string) => Promise<void>;
   savedDashboards: any[];
   isLoading: boolean;
   publishMetricUpdate: (data: any) => Promise<void>;
   logAction: (action: string, entity: string, entityId?: string, metadata?: any) => Promise<void>;
+  // Collaborative features
+  comments: any[];
+  addComment: (dashboardId: string, content: string, widgetId?: string) => Promise<void>;
+  fetchComments: (dashboardId: string) => Promise<void>;
+  workspaces: any[];
+  createWorkspace: (name: string) => Promise<void>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -83,6 +90,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [widgets, setWidgets] = useState<WidgetConfig[]>(DEPT_DATA['Sales'].widgets);
   const [kpis, setKpis] = useState<KPIData[]>(DEPT_DATA['Sales'].kpis);
   const [savedDashboards, setSavedDashboards] = useState<any[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
 
@@ -287,6 +296,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         setWidgets(config.widgets);
         setDepartment(dashboard.department as Department);
         toast.success(`Loaded dashboard: ${dashboard.name}`);
+        fetchComments(id);
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -295,6 +305,81 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   };
+
+  const deleteDashboard = async (id: string) => {
+    setIsLoading(true);
+    try {
+      await blink.db.dashboards.delete({ id });
+      toast.success('Dashboard deleted');
+      fetchSavedDashboards();
+    } catch (error) {
+      console.error('Error deleting dashboard:', error);
+      toast.error('Failed to delete dashboard');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchComments = async (dashboardId: string) => {
+    try {
+      const results = await blink.db.comments.list({ dashboard_id: dashboardId });
+      setComments(results || []);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
+
+  const addComment = async (dashboardId: string, content: string, widgetId?: string) => {
+    try {
+      const user = await blink.auth.me();
+      if (!user) return;
+
+      await blink.db.comments.create({
+        user_id: user.id,
+        dashboard_id: dashboardId,
+        widget_id: widgetId || null,
+        content
+      });
+      fetchComments(dashboardId);
+      toast.success('Comment added');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment');
+    }
+  };
+
+  const fetchWorkspaces = async () => {
+    try {
+      const results = await blink.db.workspaces.list();
+      setWorkspaces(results || []);
+    } catch (error) {
+      console.error('Error fetching workspaces:', error);
+    }
+  };
+
+  const createWorkspace = async (name: string) => {
+    try {
+      const user = await blink.auth.me();
+      if (!user) return;
+
+      await blink.db.workspaces.create({
+        owner_id: user.id,
+        name
+      });
+      fetchWorkspaces();
+      toast.success('Workspace created');
+    } catch (error) {
+      console.error('Error creating workspace:', error);
+      toast.error('Failed to create workspace');
+    }
+  };
+
+  // Fetch workspaces when authenticated
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchWorkspaces();
+    }
+  }, [currentUser?.id]);
 
   return (
     <DashboardContext.Provider value={{ 
@@ -305,10 +390,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setWidgets, 
       saveDashboard, 
       loadDashboard, 
+      deleteDashboard,
       savedDashboards, 
       isLoading,
       publishMetricUpdate,
-      logAction
+      logAction,
+      comments,
+      addComment,
+      fetchComments,
+      workspaces,
+      createWorkspace
     }}>
       {children}
     </DashboardContext.Provider>

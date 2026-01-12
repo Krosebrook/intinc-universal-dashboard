@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDashboard, Department } from '../../hooks/use-dashboard';
 import { 
   BarChart3, 
@@ -12,12 +12,16 @@ import {
   Database,
   Share2,
   FileText,
-  X
+  X,
+  Briefcase,
+  ChevronDown,
+  Plus
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { blink } from '../../lib/blink';
 import { toast } from 'react-hot-toast';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'Sales', icon: BarChart3, label: 'Sales & Revenue' },
@@ -27,24 +31,17 @@ const departments: { id: Department; icon: any; label: string }[] = [
 ];
 
 export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => void }) {
-  const { department, setDepartment, savedDashboards, loadDashboard } = useDashboard();
+  const { department, setDepartment, savedDashboards, loadDashboard, deleteDashboard, workspaces, createWorkspace } = useDashboard();
+  const [activeWorkspace, setActiveWorkspace] = useState('Global Operations');
 
-  const deleteDashboard = async (e: React.MouseEvent, id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    try {
-      await blink.db.dashboards.delete({ id });
-      toast.success('Dashboard deleted');
-      // Force refresh of saved dashboards list
-      window.dispatchEvent(new CustomEvent('refresh-dashboards'));
-    } catch (error) {
-      console.error('Error deleting dashboard:', error);
-      toast.error('Failed to delete dashboard');
-    }
+    await deleteDashboard(id);
   };
 
   return (
     <aside className="w-72 h-screen glass-sidebar flex flex-col p-6 hidden lg:flex relative z-50">
-      <div className="flex items-center gap-3 mb-12">
+      <div className="flex items-center gap-3 mb-8">
         <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
           <Activity className="w-6 h-6 text-primary-foreground" />
         </div>
@@ -52,6 +49,46 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
           <span className="font-bold text-xl tracking-tight block leading-none">intinc</span>
           <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mt-1 block">Universal Engine</span>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <Briefcase size={18} className="text-primary" />
+                <span className="text-sm font-bold truncate">{activeWorkspace}</span>
+              </div>
+              <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-64 glass-card border-white/10" align="start">
+            <DropdownMenuLabel className="text-xs uppercase tracking-widest text-muted-foreground">Workspaces</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuItem className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer" onClick={() => setActiveWorkspace('Global Operations')}>
+              <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center text-[10px] font-bold">GO</div>
+              Global Operations
+            </DropdownMenuItem>
+            {workspaces.map(ws => (
+              <DropdownMenuItem key={ws.id} className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer" onClick={() => setActiveWorkspace(ws.name)}>
+                <div className="w-6 h-6 rounded bg-white/10 flex items-center justify-center text-[10px] font-bold">
+                  {ws.name.substring(0, 2).toUpperCase()}
+                </div>
+                {ws.name}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuItem 
+              className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer text-primary font-semibold"
+              onClick={() => {
+                const name = prompt('Workspace Name:');
+                if (name) createWorkspace(name);
+              }}
+            >
+              <Plus size={14} /> Create New Workspace
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <div className="space-y-1 mb-10">

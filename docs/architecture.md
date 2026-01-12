@@ -30,3 +30,23 @@ The **Insight Engine** is a proprietary pre-processing layer that sits between t
 
 ## Layout System
 The platform utilizes a **12-column responsive grid**. The `WidgetGrid` component dynamically calculates spans and offsets based on the dashboard configuration, supporting everything from simple KPI cards to complex, multi-span AreaCharts.
+
+## Collaborative & Customization Layer
+The platform empowers users to extend the dashboard without writing code through several key modules:
+
+### 1. Visual Widget Builder
+A multi-step configuration interface that allows users to:
+- **Define Layout**: Select grid spans and positions.
+- **Choose Visualization**: Select from a library of Chart types.
+- **Ingest Data**: Import data via CSV parsing or manual JSON entry.
+- **WSL (Widget Specification Language)**: Access the underlying JSON configuration for fine-grained developer control.
+
+### 2. Collaboration Hub
+A real-time communication layer built into each dashboard:
+- **Persistence**: Comments are stored in the Blink Database and linked to specific dashboards.
+- **Contextual Insights**: Allows users to provide human analysis alongside AI-generated takeaways.
+
+### 3. Multi-tenant Workspaces
+Workspaces provide high-level organization for dashboards:
+- **Isolation**: Each workspace maintains its own set of dashboards and configurations.
+- **Switching**: A global workspace selector in the sidebar allows for seamless context switching between different project environments.

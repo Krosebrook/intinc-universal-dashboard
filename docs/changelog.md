@@ -2,6 +2,19 @@
 
 All notable changes to the Intinc Universal Dashboard will be documented in this file.
 
+## [1.3.0] - 2026-01-12
+### Added
+- **Visual Widget Builder**: Added a powerful UI for creating custom widgets with real-time preview and CSV data parsing.
+- **Collaboration Hub**: Implemented a dashboard-level commenting system for real-time team insights.
+- **Workspaces**: Added support for multiple workspaces via a new selector in the global sidebar.
+- **Sharing Ecosystem**: One-click public link generation for dashboard sharing.
+- **Developer Mode (WSL)**: Introduced the Widget Specification Language (WSL) for advanced JSON-driven widget configuration.
+- **Webhook Ingestion UI**: Added endpoint documentation and copy functionality in Enterprise Settings.
+
+### Changed
+- **Optimized PDF Export**: Unified the PDF export logic into a single library utility for high-fidelity reports.
+- **Shell Refactoring**: Cleaned up the app shell to improve navigation and search consistency.
+
 ## [1.2.0] - 2026-01-12
 ### Added
 - **Enterprise Branding**: Added a settings panel for custom logos, primary colors, and company names.
