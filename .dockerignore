@@ -1,0 +1,60 @@
+# .dockerignore - Exclude files from Docker build context
+
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage
+test-results
+playwright-report
+.nyc_output
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+e2e
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist
+dist-ssr
+build
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# CI/CD
+.github
+
+# Documentation
+README.md
+CONTRIBUTING.md
+docs
+*.md
+
+# Misc
+.editorconfig
+.eslintcache
+.prettierignore
