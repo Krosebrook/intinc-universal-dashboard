@@ -4,6 +4,8 @@ import { BlinkUser } from '@blinkdotnew/sdk';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import { Toaster } from 'sonner';
+import { RBACProvider } from './hooks/use-rbac';
+import { WidgetStateProvider } from './hooks/use-widget-state';
 
 export default function App() {
   const [user, setUser] = useState<BlinkUser | null>(null);
@@ -26,9 +28,11 @@ export default function App() {
   }
 
   return (
-    <>
-      <Toaster theme="dark" position="top-right" richColors />
-      {user ? <DashboardPage /> : <LoginPage />}
-    </>
+    <RBACProvider>
+      <WidgetStateProvider>
+        <Toaster theme="dark" position="top-right" richColors />
+        {user ? <DashboardPage /> : <LoginPage />}
+      </WidgetStateProvider>
+    </RBACProvider>
   );
 }
