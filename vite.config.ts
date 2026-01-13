@@ -11,6 +11,8 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use((_req, res, next) => {
           // Content Security Policy
+          // NOTE: unsafe-inline and unsafe-eval are used in development for HMR
+          // Production builds should use nonce-based or hash-based CSP
           res.setHeader(
             'Content-Security-Policy',
             "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.blink.new https://*.blink.new;"

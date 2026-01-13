@@ -13,6 +13,24 @@ interface RateLimitEntry {
   resetTime: number;
 }
 
+/**
+ * Rate Limiter Class
+ * 
+ * Implements a sliding window rate limiting algorithm to prevent API abuse.
+ * 
+ * @example
+ * ```typescript
+ * const limiter = new RateLimiter({ maxRequests: 10, windowMs: 60000 });
+ * 
+ * if (limiter.check('user-123')) {
+ *   // Allow request
+ * } else {
+ *   // Reject request - rate limit exceeded
+ * }
+ * ```
+ * 
+ * @public
+ */
 class RateLimiter {
   private limits: Map<string, RateLimitEntry> = new Map();
   private config: RateLimitConfig;
