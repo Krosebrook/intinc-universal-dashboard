@@ -1,0 +1,92 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to Staging
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm test
+      
+      - name: Build application
+        run: npm run build
+        env:
+          VITE_BLINK_PROJECT_ID: ${{ secrets.STAGING_BLINK_PROJECT_ID }}
+          VITE_BLINK_PUBLISHABLE_KEY: ${{ secrets.STAGING_BLINK_PUBLISHABLE_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=staging-
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Deploy to staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "Image: ${{ steps.meta.outputs.tags }}"
+          # Add your deployment commands here (e.g., kubectl, helm, ssh)
+          # Example: kubectl set image deployment/dashboard dashboard=${{ steps.meta.outputs.tags }}
+      
+      - name: Run smoke tests
+        run: |
+          echo "🧪 Running smoke tests..."
+          # Add smoke test commands here
+          # Example: curl -f https://staging.yourdomain.com/health || exit 1
+      
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "### 🚀 Staging Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Staging" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
