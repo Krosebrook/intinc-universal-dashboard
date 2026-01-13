@@ -15,7 +15,8 @@ import {
   X,
   Briefcase,
   ChevronDown,
-  Plus
+  Plus,
+  UserCog
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
@@ -33,11 +34,6 @@ const departments: { id: Department; icon: any; label: string }[] = [
 export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const { department, setDepartment, savedDashboards, loadDashboard, deleteDashboard, workspaces, createWorkspace } = useDashboard();
   const [activeWorkspace, setActiveWorkspace] = useState('Global Operations');
-
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    await deleteDashboard(id);
-  };
 
   return (
     <aside className="w-72 h-screen glass-sidebar flex flex-col p-6 hidden lg:flex relative z-50">
@@ -144,7 +140,10 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
                     </div>
                   </button>
                   <button
-                    onClick={(e) => deleteDashboard(e, dash.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteDashboard(dash.id);
+                    }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 p-1 hover:bg-destructive/10 hover:text-destructive rounded transition-all"
                   >
                     <X size={14} />

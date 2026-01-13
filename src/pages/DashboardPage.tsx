@@ -145,7 +145,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div id="dashboard-content" className="space-y-8">
+        <div className="space-y-8">
           <KPISection data={kpis} />
 
           <div className="grid grid-cols-12 gap-6">
