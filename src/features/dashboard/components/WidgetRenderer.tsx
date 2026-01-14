@@ -11,6 +11,7 @@ interface WidgetRendererProps {
   widget: WidgetConfig;
   globalFilters: Record<string, any>;
   setGlobalFilter: (key: string, value: any) => void;
+  localInputs?: Record<string, any>;
 }
 
 const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
@@ -37,19 +38,38 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function WidgetRenderer({ widget, globalFilters, setGlobalFilter }: WidgetRendererProps) {
+export function WidgetRenderer({ widget, globalFilters, setGlobalFilter, localInputs = {} }: WidgetRendererProps) {
   const colors = widget.colors || DEFAULT_COLORS;
-  const dataKeys = Array.isArray(widget.dataKey) ? widget.dataKey : [widget.dataKey];
+  let dataKeys = Array.isArray(widget.dataKey) ? widget.dataKey : [widget.dataKey];
+  
+  // Phase 6.2: Handle dataKey overrides from inputs (e.g., modelVersion)
+  if (localInputs.modelVersion && localInputs.modelVersion !== 'all') {
+    dataKeys = [localInputs.modelVersion];
+  } else if (localInputs.cluster) {
+    dataKeys = [localInputs.cluster];
+  }
+
   const activeFilterCount = Object.values(globalFilters).filter(Boolean).length;
 
   const filteredData = widget.data.filter(item => {
-    return Object.entries(globalFilters).every(([key, value]) => {
+    // Apply global filters
+    const passGlobal = Object.entries(globalFilters).every(([key, value]) => {
       if (!value || key === widget.categoryKey) return true;
+      return String(item[key]) === String(value);
+    });
+
+    if (!passGlobal) return false;
+
+    // Apply local widget inputs (Phase 6.2)
+    return Object.entries(localInputs).every(([key, value]) => {
+      if (value === undefined || value === null || value === '' || value === 'all') return true;
+      if (typeof value === 'boolean') return true; // Handled by visualization logic usually
       return String(item[key]) === String(value);
     });
   });
 
-  const chartData = widget.forecast ? filteredData.map((d, i) => ({
+  const isForecastEnabled = localInputs.showForecast ?? widget.forecast;
+  const chartData = isForecastEnabled ? filteredData.map((d, i) => ({
     ...d,
     isForecast: i > filteredData.length * 0.7
   })) : filteredData;

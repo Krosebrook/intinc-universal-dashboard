@@ -14,7 +14,8 @@ import {
   Layout, 
   ChevronRight,
   Copy,
-  Download
+  Download,
+  Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
@@ -30,8 +31,13 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal
 } from '../../../components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { Switch } from '../../../components/ui/switch';
+import { Label } from '../../../components/ui/label';
+import { Input } from '../../../components/ui/input';
 import { WidgetConfig } from '../../../types/dashboard';
 import { WidgetRenderer } from './WidgetRenderer';
+import { useWidgetApi } from '../../../hooks/use-widget-api';
 
 interface WidgetCardProps {
   widget: WidgetConfig;
@@ -56,6 +62,7 @@ export function WidgetCard({
   onResize,
   onDuplicate,
 }: WidgetCardProps) {
+  const { inputs, setInput } = useWidgetApi(widget.id);
   const {
     attributes,
     listeners,
@@ -220,12 +227,67 @@ export function WidgetCard({
               </DropdownMenu>
             </div>
           </CardHeader>
+
+          {/* Widget Inputs (Phase 6.2) */}
+          {widget.inputs && widget.inputs.length > 0 && (
+            <div className="px-6 py-2 border-y border-white/5 bg-white/[0.02] flex flex-wrap gap-4 items-center">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                <Filter size={10} />
+                Widget Parameters
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {widget.inputs.map((input) => (
+                  <div key={input.id} className="flex items-center gap-2">
+                    {input.type === 'select' && (
+                      <Select 
+                        value={inputs[input.id]} 
+                        onValueChange={(val) => setInput(input.id, val)}
+                      >
+                        <SelectTrigger className="h-7 min-w-[100px] text-[10px] bg-white/5 border-white/10">
+                          <SelectValue placeholder={input.placeholder || input.label} />
+                        </SelectTrigger>
+                        <SelectContent className="glass-card border-white/10">
+                          {input.options?.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value} className="text-[10px]">
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {input.type === 'toggle' && (
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`toggle-${widget.id}-${input.id}`} className="text-[10px] uppercase tracking-wider opacity-60">
+                          {input.label}
+                        </Label>
+                        <Switch 
+                          id={`toggle-${widget.id}-${input.id}`}
+                          checked={inputs[input.id]} 
+                          onCheckedChange={(val) => setInput(input.id, val)}
+                        />
+                      </div>
+                    )}
+                    {input.type === 'text' && (
+                      <Input 
+                        placeholder={input.placeholder || input.label}
+                        value={inputs[input.id] || ''}
+                        onChange={(e) => setInput(input.id, e.target.value)}
+                        className="h-7 text-[10px] bg-white/5 border-white/10 max-w-[120px]"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <CardContent className="flex-1 min-h-[300px] mt-2 relative flex flex-col">
             <div className="flex-1 relative">
               <WidgetRenderer 
                 widget={widget} 
                 globalFilters={globalFilters} 
-                setGlobalFilter={setGlobalFilter} 
+                setGlobalFilter={setGlobalFilter}
+                localInputs={inputs}
               />
             </div>
             

@@ -48,6 +48,8 @@ interface DashboardContextType {
   suggestedStep: SuggestedStep | null;
   isWidgetBuilderOpen: boolean;
   setIsWidgetBuilderOpen: (open: boolean) => void;
+  dashboardState: Record<string, any>;
+  setDashboardState: (key: string, value: any) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -58,6 +60,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [kpis, setKpis] = useState<KPIData[]>([]);
   const [currentView, setCurrentView] = useState<'overview' | 'explorer'>('explorer'); // Start in explorer (upload) mode
   const [globalFilters, setGlobalFilters] = useState<Record<string, any>>({});
+  const [dashboardState, setDashboardStateInternal] = useState<Record<string, any>>({});
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
   const [suggestedStep, setSuggestedStep] = useState<SuggestedStep | null>(null);
@@ -181,6 +184,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const setDashboardState = useCallback((key: string, value: any) => {
+    setDashboardStateInternal(prev => ({ ...prev, [key]: value }));
+  }, []);
+
   const value = {
     department,
     setDepartment,
@@ -208,7 +215,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     loadTemplate,
     suggestedStep,
     isWidgetBuilderOpen,
-    setIsWidgetBuilderOpen
+    setIsWidgetBuilderOpen,
+    dashboardState,
+    setDashboardState
   };
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

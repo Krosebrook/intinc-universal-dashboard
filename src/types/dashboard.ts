@@ -26,6 +26,23 @@ export interface WidgetConfig {
   stack?: boolean;
   goal?: number;
   forecast?: boolean;
+  inputs?: WidgetInputConfig[];
+  events?: WidgetEventConfig[];
+}
+
+export interface WidgetInputConfig {
+  id: string;
+  type: 'select' | 'date-range' | 'text' | 'number' | 'toggle';
+  label: string;
+  defaultValue?: any;
+  options?: { label: string; value: any }[];
+  placeholder?: string;
+}
+
+export interface WidgetEventConfig {
+  type: 'filter' | 'navigation' | 'custom';
+  targetWidgetId?: string; // If specific, otherwise broadcast
+  payload: any;
 }
 
 export interface SavedDashboard {
