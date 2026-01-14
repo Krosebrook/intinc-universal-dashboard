@@ -16,13 +16,15 @@ import {
   Briefcase,
   ChevronDown,
   Plus,
-  UserCog
+  CreditCard,
+  Ticket,
+  Cloud,
+  Github as GithubIcon
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
-import { blink } from '../../lib/blink';
-import { toast } from 'react-hot-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'Sales', icon: BarChart3, label: 'Sales & Revenue' },
@@ -31,8 +33,15 @@ const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'Marketing', icon: PieChart, label: 'Marketing Ops' },
 ];
 
+const mockSources = [
+  { id: 'Stripe', icon: CreditCard, color: 'text-[#635BFF]' },
+  { id: 'Jira', icon: Ticket, color: 'text-[#0052CC]' },
+  { id: 'AWS', icon: Cloud, color: 'text-[#FF9900]' },
+  { id: 'GitHub', icon: GithubIcon, color: 'text-[#181717]' },
+] as const;
+
 export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => void }) {
-  const { department, setDepartment, savedDashboards, loadDashboard, deleteDashboard, workspaces, createWorkspace } = useDashboard();
+  const { department, setDepartment, savedDashboards, loadDashboard, deleteDashboard, workspaces, createWorkspace, generateMockData, currentView, setCurrentView } = useDashboard();
   const [activeWorkspace, setActiveWorkspace] = useState('Global Operations');
 
   return (
@@ -89,8 +98,18 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
       
       <div className="space-y-1 mb-10">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Core Platform</p>
-        <NavItem icon={<LayoutDashboard size={20} />} label="Global Overview" />
-        <NavItem icon={<Database size={20} />} label="Data Explorer" />
+        <NavItem 
+          icon={<LayoutDashboard size={20} />} 
+          label="Global Overview" 
+          active={currentView === 'overview'}
+          onClick={() => setCurrentView('overview')}
+        />
+        <NavItem 
+          icon={<Database size={20} />} 
+          label="Data Explorer" 
+          active={currentView === 'explorer'}
+          onClick={() => setCurrentView('explorer')}
+        />
         <NavItem 
           icon={<Share2 size={20} />} 
           label="Integrations" 
@@ -119,6 +138,29 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
               <span className="text-sm font-semibold">{dept.label}</span>
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="mb-10">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Quick Connectors</p>
+        <div className="flex gap-2 px-2 overflow-x-auto pb-2 scrollbar-hide">
+          <TooltipProvider>
+            {mockSources.map((source) => (
+              <Tooltip key={source.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => generateMockData(source.id)}
+                    className="w-12 h-12 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-primary/50 transition-all hover:scale-110 active:scale-95"
+                  >
+                    <source.icon className={cn("w-5 h-5", source.color)} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="glass-card border-white/10 text-xs font-bold uppercase tracking-widest">
+                  Connect {source.id}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </TooltipProvider>
         </div>
       </div>
 

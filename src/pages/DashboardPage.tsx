@@ -6,8 +6,9 @@ import AIInsight from '../components/dashboard/AIInsight';
 import LiveSimulator from '../components/dashboard/LiveSimulator';
 import TemplateGallery from '../components/dashboard/TemplateGallery';
 import VisualWidgetBuilder from '../components/dashboard/VisualWidgetBuilder';
+import CSVUploader from '../components/dashboard/CSVUploader';
 import { useDashboard } from '../hooks/use-dashboard';
-import { Plus, Filter, Calendar, Layout, Save, Download, Share2, MessageSquare, Trash2 } from 'lucide-react';
+import { Plus, Filter, Calendar, Layout, Save, Download, Share2, MessageSquare, Trash2, Database } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
@@ -32,7 +33,8 @@ export default function DashboardPage() {
     fetchComments,
     savedDashboards,
     loadDashboard,
-    deleteDashboard
+    deleteDashboard,
+    currentView
   } = useDashboard();
   
   const [showTemplates, setShowTemplates] = useState(false);
@@ -87,9 +89,13 @@ export default function DashboardPage() {
               animate={{ opacity: 1, x: 0 }}
               className="text-3xl font-bold tracking-tight mb-1"
             >
-              Executive Summary
+              {currentView === 'overview' ? 'Executive Summary' : 'Data Explorer'}
             </motion.h2>
-            <p className="text-muted-foreground">Real-time performance metrics for the {department} department.</p>
+            <p className="text-muted-foreground">
+              {currentView === 'overview' 
+                ? `Real-time performance metrics for the ${department} department.`
+                : 'Import and map your custom datasets to generate unique insights.'}
+            </p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -146,108 +152,120 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-8">
-          <KPISection data={kpis} />
+          {currentView === 'overview' ? (
+            <>
+              <KPISection data={kpis} />
 
-          <div className="grid grid-cols-12 gap-6">
-            <div className={`transition-all duration-300 ${showComments ? 'col-span-12 lg:col-span-6' : 'col-span-12 lg:col-span-8'}`}>
-              <WidgetGrid widgets={widgets} onUpdate={setWidgets} />
-            </div>
-            
-            <AnimatePresence>
-              {showComments ? (
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="col-span-12 lg:col-span-6 space-y-6"
-                >
-                  <div className="glass-card border-white/10 rounded-2xl overflow-hidden flex flex-col h-[800px]">
-                    <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="w-5 h-5 text-primary" />
-                        <h3 className="font-bold">Collaboration Hub</h3>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setShowComments(false)}>Close</Button>
-                    </div>
-
-                    <ScrollArea className="flex-1 p-6">
-                      <div className="space-y-6">
-                        {comments.length === 0 ? (
-                          <div className="text-center py-12">
-                            <MessageSquare className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-                            <p className="text-muted-foreground">No insights yet. Start the conversation!</p>
+              <div className="grid grid-cols-12 gap-6">
+                <div className={`transition-all duration-300 ${showComments ? 'col-span-12 lg:col-span-6' : 'col-span-12 lg:col-span-8'}`}>
+                  <WidgetGrid widgets={widgets} onUpdate={setWidgets} />
+                </div>
+                
+                <AnimatePresence>
+                  {showComments ? (
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="col-span-12 lg:col-span-6 space-y-6"
+                    >
+                      <div className="glass-card border-white/10 rounded-2xl overflow-hidden flex flex-col h-[800px]">
+                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="w-5 h-5 text-primary" />
+                            <h3 className="font-bold">Collaboration Hub</h3>
                           </div>
-                        ) : (
-                          comments.map((comment) => (
-                            <div key={comment.id} className="flex gap-4">
-                              <Avatar className="w-8 h-8 border border-white/10">
-                                <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                                  {comment.user_id?.substring(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 space-y-1">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs font-semibold">User {comment.user_id?.substring(0, 5)}</span>
-                                  <span className="text-[10px] text-muted-foreground">{new Date(comment.created_at).toLocaleTimeString()}</span>
-                                </div>
-                                <div className="p-3 bg-white/5 border border-white/10 rounded-2xl rounded-tl-none">
-                                  <p className="text-sm">{comment.content}</p>
-                                </div>
+                          <Button variant="ghost" size="sm" onClick={() => setShowComments(false)}>Close</Button>
+                        </div>
+
+                        <ScrollArea className="flex-1 p-6">
+                          <div className="space-y-6">
+                            {comments.length === 0 ? (
+                              <div className="text-center py-12">
+                                <MessageSquare className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                                <p className="text-muted-foreground">No insights yet. Start the conversation!</p>
                               </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </ScrollArea>
-
-                    <div className="p-6 border-t border-white/10 bg-white/5">
-                      <div className="flex gap-2">
-                        <Input 
-                          placeholder="Type an insight or comment..." 
-                          value={commentInput}
-                          onChange={(e) => setCommentInput(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                          className="glass border-white/10"
-                        />
-                        <Button onClick={handleAddComment}>Send</Button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <div className="col-span-12 lg:col-span-4 space-y-6">
-                  <AIInsight />
-                  <LiveSimulator />
-                  
-                  {savedDashboards.length > 0 && (
-                    <div className="glass-card border-white/10 p-6 rounded-2xl">
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Saved Views</h3>
-                      <div className="space-y-2">
-                        {savedDashboards.map(dash => (
-                          <div key={dash.id} className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors group">
-                            <button 
-                              className="flex-1 text-left text-sm font-medium hover:text-primary transition-colors"
-                              onClick={() => loadDashboard(dash.id)}
-                            >
-                              {dash.name}
-                            </button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
-                              onClick={() => deleteDashboard(dash.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            ) : (
+                              comments.map((comment) => (
+                                <div key={comment.id} className="flex gap-4">
+                                  <Avatar className="w-8 h-8 border border-white/10">
+                                    <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                                      {comment.user_id?.substring(0, 2).toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-semibold">User {comment.user_id?.substring(0, 5)}</span>
+                                      <span className="text-[10px] text-muted-foreground">{new Date(comment.created_at).toLocaleTimeString()}</span>
+                                    </div>
+                                    <div className="p-3 bg-white/5 border border-white/10 rounded-2xl rounded-tl-none">
+                                      <p className="text-sm">{comment.content}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
                           </div>
-                        ))}
+                        </ScrollArea>
+
+                        <div className="p-6 border-t border-white/10 bg-white/5">
+                          <div className="flex gap-2">
+                            <Input 
+                              placeholder="Type an insight or comment..." 
+                              value={commentInput}
+                              onChange={(e) => setCommentInput(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                              className="glass border-white/10"
+                            />
+                            <Button onClick={handleAddComment}>Send</Button>
+                          </div>
+                        </div>
                       </div>
+                    </motion.div>
+                  ) : (
+                    <div className="col-span-12 lg:col-span-4 space-y-6">
+                      <AIInsight />
+                      <LiveSimulator />
+                      
+                      {savedDashboards.length > 0 && (
+                        <div className="glass-card border-white/10 p-6 rounded-2xl">
+                          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Saved Views</h3>
+                          <div className="space-y-2">
+                            {savedDashboards.map(dash => (
+                              <div key={dash.id} className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors group">
+                                <button 
+                                  className="flex-1 text-left text-sm font-medium hover:text-primary transition-colors"
+                                  onClick={() => loadDashboard(dash.id)}
+                                >
+                                  {dash.name}
+                                </button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                                  onClick={() => deleteDashboard(dash.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
-            </AnimatePresence>
-          </div>
+                </AnimatePresence>
+              </div>
+            </>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-4xl mx-auto"
+            >
+              <CSVUploader />
+            </motion.div>
+          )}
         </div>
       </div>
 
