@@ -10,7 +10,7 @@ import UniversalIngestor from '../features/dashboard/components/UniversalIngesto
 import { SmartAssistant } from '../features/dashboard/components/SmartAssistant';
 import { useDashboard } from '../hooks/use-dashboard';
 import { useExport } from '../hooks/use-export';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { DashboardHeader } from '../features/dashboard/components/DashboardHeader';
