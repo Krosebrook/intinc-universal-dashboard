@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, Bell, User, Search, FileText } from 'lucide-react';
+import { LogOut, Bell, User, Search, FileText, Menu } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { blink } from '../../../lib/blink';
@@ -8,9 +8,10 @@ import { toast } from 'sonner';
 
 interface DashboardNavbarProps {
   department: string;
+  onOpenMobileMenu?: () => void;
 }
 
-export function DashboardNavbar({ department }: DashboardNavbarProps) {
+export function DashboardNavbar({ department, onOpenMobileMenu }: DashboardNavbarProps) {
   const { isExporting, performExport } = useExport();
 
   const handleExportPDF = async () => {
@@ -18,8 +19,17 @@ export function DashboardNavbar({ department }: DashboardNavbarProps) {
   };
 
   return (
-    <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 glass sticky top-0 z-50 transition-all duration-300 backdrop-blur-xl bg-background/40">
-      <div className="flex items-center gap-6">
+    <header className="h-16 border-b border-white/5 flex items-center justify-between px-4 lg:px-8 glass sticky top-0 z-50 transition-all duration-300 backdrop-blur-xl bg-background/40">
+      <div className="flex items-center gap-4 lg:gap-6">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onOpenMobileMenu}
+          className="lg:hidden text-muted-foreground hover:text-foreground h-10 w-10 rounded-xl"
+        >
+          <Menu size={20} />
+        </Button>
+
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold tracking-tight text-foreground/90">{department}</h1>
           <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">Dashboard</span>

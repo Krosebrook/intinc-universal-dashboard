@@ -50,12 +50,12 @@ const mockSources = [
   { id: 'OpenAI', icon: Brain, color: 'text-[#74AA9C]' },
 ] as const;
 
-export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => void }) {
+export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?: () => void, className?: string }) {
   const { department, setDepartment, savedDashboards, loadDashboard, deleteDashboard, workspaces, createWorkspace, generateMockData, currentView, setCurrentView } = useDashboard();
   const [activeWorkspace, setActiveWorkspace] = useState('Global Operations');
 
   return (
-    <aside className="w-72 h-screen glass-sidebar flex flex-col p-6 hidden lg:flex relative z-50">
+    <aside className={cn("w-72 h-screen glass-sidebar flex flex-col p-6 relative z-50", className)}>
       <div className="flex items-center gap-3 mb-8">
         <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
           <Activity className="w-6 h-6 text-primary-foreground" />

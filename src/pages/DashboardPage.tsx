@@ -38,7 +38,8 @@ export default function DashboardPage() {
     deleteDashboard,
     currentView,
     isWidgetBuilderOpen,
-    setIsWidgetBuilderOpen
+    setIsWidgetBuilderOpen,
+    suggestedStep
   } = useDashboard();
   
   const [showTemplates, setShowTemplates] = useState(false);
@@ -127,6 +128,36 @@ export default function DashboardPage() {
             onApply={handleApplyJson}
             onClose={() => setIsDevMode(false)}
           />
+
+          <AnimatePresence>
+            {suggestedStep && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="glass-card border-primary/20 bg-primary/5 p-4 rounded-2xl flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shadow-glow shadow-primary/10">
+                      <Save className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-primary mb-0.5">{suggestedStep.title}</p>
+                      <p className="text-[11px] text-muted-foreground font-medium">{suggestedStep.description}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={suggestedStep.onAction}
+                    className="bg-primary hover:bg-primary-glow text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl px-6 h-10"
+                  >
+                    {suggestedStep.actionLabel}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {currentView === 'overview' ? (
             <>
