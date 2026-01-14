@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useDashboard } from '../../hooks/use-dashboard';
-import { Department } from '../../types/dashboard';
+import { useDashboard, Department } from '../../hooks/use-dashboard';
 import { 
   BarChart3, 
   Users, 
