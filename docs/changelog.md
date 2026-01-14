@@ -2,6 +2,20 @@
 
 All notable changes to the Intinc Universal Dashboard will be documented in this file.
 
+## [2.0.0] - 2026-01-14
+### Added - Phase 6: Custom Widget SDK
+- **Widget SDK Hooks**: Added comprehensive hooks for custom widget development (`useWidgetSDK`, `useFilteredData`, `useComparisonData`, `useWidgetLocalState`).
+- **Cross-Widget Communication**: Implemented pub/sub system for widgets to communicate and synchronize state.
+- **Widget Performance Profiler**: Real-time performance monitoring tool tracking render times, re-render counts, and data sizes.
+- **Code Splitting Utilities**: Dynamic import system with lazy loading, preloading, and progressive loading strategies.
+- **Security Framework**: Comprehensive security utilities including input sanitization, sandbox execution, rate limiting, and memory checks.
+- **Widget Examples**: Two complete example widgets (InteractiveSalesChart, ComparisonTimeline) demonstrating SDK capabilities.
+- **Widget SDK Documentation**: Complete developer guide with examples, best practices, and troubleshooting.
+
+### Changed
+- **Architecture**: Extended architecture to support custom widget SDK with performance and security isolation.
+- **State Management**: Enhanced global state management to support cross-widget interactions and synchronization.
+
 ## [1.3.0] - 2026-01-12
 ### Added
 - **Visual Widget Builder**: Added a powerful UI for creating custom widgets with real-time preview and CSV data parsing.

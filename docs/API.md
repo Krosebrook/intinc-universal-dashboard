@@ -442,6 +442,121 @@ const dashboards = await blink.db.dashboards.find(
 - [Blink SDK Documentation](https://docs.blink.new)
 - [Security Best Practices](./security.md)
 - [Testing Guide](./TESTING.md)
+- [Widget SDK Guide](./WIDGET_SDK.md)
+
+## 🎨 Widget SDK API
+
+### Widget Registration
+
+```typescript
+import { widgetLoader } from '@/lib/performance/widget-code-splitting';
+
+widgetLoader.registerWidget({
+  id: 'my-custom-widget',
+  name: 'MyWidget',
+  version: '1.0.0',
+  componentPath: './widgets/MyWidget',
+  dependencies: ['recharts'],
+  size: 45000
+});
+```
+
+### Using Widget SDK Hooks
+
+```typescript
+import { useWidgetSDK } from '@/hooks/use-widget-sdk';
+
+function MyWidget({ id, data }) {
+  const sdk = useWidgetSDK(id, {
+    respondToFilters: true,
+    filterMapping: { category: 'type' }
+  });
+
+  // Create filter
+  sdk.filters.create('status', 'active', 'equals');
+
+  // Broadcast event
+  sdk.emit('filter', { field: 'status', value: 'active' });
+
+  // Subscribe to events
+  useEffect(() => {
+    const unsubscribe = sdk.subscribe((event) => {
+      console.log('Event received:', event);
+    });
+    return unsubscribe;
+  }, [sdk]);
+
+  return <div>Widget Content</div>;
+}
+```
+
+### Lazy Loading Widgets
+
+```typescript
+import { LazyWidget } from '@/lib/performance/widget-code-splitting';
+
+function Dashboard() {
+  return (
+    <LazyWidget
+      widgetId="my-custom-widget"
+      props={{ id: 'widget-1', data: myData }}
+      fallback={<LoadingSkeleton />}
+    />
+  );
+}
+```
+
+### Performance Monitoring
+
+```typescript
+import { WidgetPerformanceProfiler } from '@/components/dashboard/WidgetPerformanceProfiler';
+import { useWidgetPerformance } from '@/components/dashboard/WidgetPerformanceProfiler';
+
+// In your app
+function App() {
+  return (
+    <>
+      <Dashboard />
+      <WidgetPerformanceProfiler enabled={process.env.NODE_ENV === 'development'} />
+    </>
+  );
+}
+
+// In your widget
+function MyWidget({ id, data }) {
+  useWidgetPerformance(id, 'My Widget', data.length);
+  // ... widget code
+}
+```
+
+### Security Utilities
+
+```typescript
+import { 
+  sanitizeWidgetConfig, 
+  validateWidgetData,
+  createWidgetSandbox 
+} from '@/lib/security/widget-security';
+
+// Sanitize config
+const safeConfig = sanitizeWidgetConfig(userConfig);
+
+// Validate data
+const validation = validateWidgetData(data, {
+  requiredFields: ['name', 'value'],
+  maxItems: 10000,
+  allowedTypes: { name: 'string', value: 'number' }
+});
+
+// Sandbox execution
+const sandbox = createWidgetSandbox();
+const codeValidation = sandbox.validateCode(userCode);
+if (codeValidation.valid) {
+  const result = sandbox.executeTransform(userCode, data);
+}
+```
+
+For complete Widget SDK documentation, see [Widget SDK Guide](./WIDGET_SDK.md).
 
 ---
 

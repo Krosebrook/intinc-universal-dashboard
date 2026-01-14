@@ -50,3 +50,28 @@ A real-time communication layer built into each dashboard:
 Workspaces provide high-level organization for dashboards:
 - **Isolation**: Each workspace maintains its own set of dashboards and configurations.
 - **Switching**: A global workspace selector in the sidebar allows for seamless context switching between different project environments.
+
+## Custom Widget SDK (Phase 6)
+The Widget SDK enables developers to create sophisticated custom widgets with full integration into the dashboard ecosystem.
+
+### Widget State Management
+- **Global State Access**: Widgets can read and modify global dashboard state through the `useWidgetSDK` hook.
+- **Cross-Widget Communication**: Widgets can broadcast events and subscribe to events from other widgets.
+- **Filter Synchronization**: Widgets automatically respond to global filters and can create their own filters.
+- **Date Range Handling**: Unified date range management across all widgets.
+- **Comparison Mode**: Built-in support for comparing data across different time periods.
+- **Drill-Down Navigation**: Hierarchical data exploration with breadcrumb navigation.
+
+### Performance Architecture
+- **Code Splitting**: Widgets are loaded on-demand using dynamic imports and React.lazy.
+- **Progressive Loading**: High-priority widgets load first, followed by below-fold widgets.
+- **Performance Profiler**: Real-time monitoring of widget render times, re-render counts, and data sizes.
+- **Memory Management**: Automatic cleanup and unloading of unused widget bundles.
+
+### Security Architecture
+- **Input Sanitization**: All widget configurations and data are sanitized using DOMPurify.
+- **Sandbox Execution**: Custom widget code runs in a controlled sandbox with restricted access to dangerous APIs.
+- **Rate Limiting**: Widget operations are rate-limited to prevent abuse.
+- **Data Validation**: Zod-based schema validation for all widget data structures.
+- **CSP Headers**: Content Security Policy enforcement for widget iframes.
+- **Memory Limits**: Enforced size limits on widget data to prevent memory exhaustion.

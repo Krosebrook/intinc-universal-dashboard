@@ -16,6 +16,7 @@ A production-ready, enterprise-grade universal dashboard platform built with Rea
 - 🔄 **Real-Time Collaboration** - Live updates and team commenting
 - 🏢 **Workspace Management** - Multi-tenant architecture with RBAC
 - 📱 **Responsive Design** - Mobile-first, works on all devices
+- 🔧 **Custom Widget SDK** - Build interactive widgets with full SDK support
 
 ### Enterprise Features
 - 🔒 **Production-Grade Security** - Input sanitization, CSP, rate limiting, RLS
@@ -26,6 +27,16 @@ A production-ready, enterprise-grade universal dashboard platform built with Rea
 - 📝 **Structured Logging** - Comprehensive logging and monitoring
 - 🔐 **RBAC** - Role-based access control (Owner, Admin, Editor, Viewer)
 - ⚡ **Performance Optimized** - Code splitting, lazy loading, caching
+
+### Widget SDK (Phase 6)
+- 🎯 **Cross-Widget Communication** - Widgets can interact and synchronize
+- 🔍 **Global Filtering** - Unified filter system across all widgets
+- 📊 **Comparison Mode** - Compare metrics across time periods
+- 🎢 **Drill-Down Navigation** - Hierarchical data exploration
+- ⚡ **Performance Profiler** - Real-time widget performance monitoring
+- 🔒 **Security Sandbox** - Safe execution of custom widget code
+- 📦 **Code Splitting** - Lazy loading with progressive enhancement
+- 📚 **Complete SDK Docs** - Comprehensive developer documentation
 
 ## 🏗️ Tech Stack
 
@@ -141,6 +152,8 @@ docker run -p 80:80 intinc-dashboard
 - [Testing](./docs/TESTING.md) - Testing strategy and guidelines
 - [Deployment](./docs/DEPLOYMENT.md) - Deployment guide
 - [API](./docs/API.md) - API documentation
+- [Widget SDK](./docs/WIDGET_SDK.md) - Custom widget development guide
+- [Roadmap](./docs/ROADMAP.md) - Product roadmap and completed features
 - [Contributing](./CONTRIBUTING.md) - Contribution guidelines
 
 ## 🔒 Security
