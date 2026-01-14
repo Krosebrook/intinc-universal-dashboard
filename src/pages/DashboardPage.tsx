@@ -7,6 +7,7 @@ import LiveSimulator from '../components/dashboard/LiveSimulator';
 import TemplateGallery from '../components/dashboard/TemplateGallery';
 import VisualWidgetBuilder from '../components/dashboard/VisualWidgetBuilder';
 import UniversalIngestor from '../components/dashboard/UniversalIngestor';
+import { SmartAssistant } from '../components/dashboard/SmartAssistant';
 import { useDashboard } from '../hooks/use-dashboard';
 import { useExport } from '../hooks/use-export';
 import { motion } from 'framer-motion';
@@ -33,12 +34,13 @@ export default function DashboardPage() {
     savedDashboards,
     loadDashboard,
     deleteDashboard,
-    currentView
+    currentView,
+    isWidgetBuilderOpen,
+    setIsWidgetBuilderOpen
   } = useDashboard();
   
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [showAddWidgetDialog, setShowAddWidgetDialog] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [dashboardName, setDashboardName] = useState('');
   const { isExporting, performExport } = useExport();
@@ -112,7 +114,7 @@ export default function DashboardPage() {
           onToggleComments={() => setShowComments(!showComments)}
           onToggleDevMode={setIsDevMode}
           onExport={handleExport}
-          onAddWidget={() => setShowAddWidgetDialog(true)}
+          onAddWidget={() => setIsWidgetBuilderOpen(true)}
         />
 
         <div className="space-y-8">
@@ -170,10 +172,12 @@ export default function DashboardPage() {
       <TemplateGallery open={showTemplates} onOpenChange={setShowTemplates} />
       
       <VisualWidgetBuilder 
-        open={showAddWidgetDialog} 
-        onOpenChange={setShowAddWidgetDialog} 
+        open={isWidgetBuilderOpen} 
+        onOpenChange={setIsWidgetBuilderOpen} 
         onAdd={(widget) => setWidgets([...widgets, widget])} 
       />
+
+      <SmartAssistant />
 
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
         <DialogContent className="glass-card border-white/10">

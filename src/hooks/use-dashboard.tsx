@@ -13,6 +13,14 @@ import { useComments } from './use-comments';
 import { useRealtimeMetrics } from './use-realtime-metrics';
 import { useWorkspaces } from './use-workspaces';
 
+export interface SuggestedStep {
+  id: string;
+  title: string;
+  description: string;
+  actionLabel: string;
+  onAction: () => void;
+}
+
 interface DashboardContextType {
   department: Department;
   setDepartment: (dept: Department) => void;
@@ -38,6 +46,9 @@ interface DashboardContextType {
   setGlobalFilter: (key: string, value: any) => void;
   clearFilters: () => void;
   loadTemplate: (templateId: string) => void;
+  suggestedStep: SuggestedStep | null;
+  isWidgetBuilderOpen: boolean;
+  setIsWidgetBuilderOpen: (open: boolean) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -49,6 +60,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [currentView, setCurrentView] = useState<'overview' | 'explorer'>('overview');
   const [globalFilters, setGlobalFilters] = useState<Record<string, any>>({});
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
+  const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
+  const [suggestedStep, setSuggestedStep] = useState<SuggestedStep | null>(null);
 
   useEffect(() => {
     const unsubscribe = blink.auth.onAuthStateChanged((state) => {
@@ -56,6 +69,37 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     });
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    // Logic to re-evaluate user progress
+    if (widgets.length === 0) {
+      setSuggestedStep({
+        id: 'add-widget',
+        title: 'Empty Dashboard',
+        description: 'Start by adding your first data widget to visualize your metrics.',
+        actionLabel: 'Add Widget',
+        onAction: () => setIsWidgetBuilderOpen(true)
+      });
+    } else if (currentView === 'overview' && widgets.length < 3) {
+      setSuggestedStep({
+        id: 'explorer-mode',
+        title: 'Need More Data?',
+        description: 'Switch to Explorer mode to upload custom CSV datasets or connect APIs.',
+        actionLabel: 'Go to Explorer',
+        onAction: () => setCurrentView('explorer')
+      });
+    } else if (currentView === 'explorer') {
+      setSuggestedStep({
+        id: 'back-to-overview',
+        title: 'Analyze Insights',
+        description: 'Ready with your data? Head back to Overview to see AI-powered summaries.',
+        actionLabel: 'View Dashboard',
+        onAction: () => setCurrentView('overview')
+      });
+    } else {
+      setSuggestedStep(null);
+    }
+  }, [widgets, currentView]);
 
   useEffect(() => {
     setWidgets(DEPT_DATA[department].widgets);
@@ -154,7 +198,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     globalFilters,
     setGlobalFilter,
     clearFilters,
-    loadTemplate
+    loadTemplate,
+    suggestedStep,
+    isWidgetBuilderOpen,
+    setIsWidgetBuilderOpen
   };
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
