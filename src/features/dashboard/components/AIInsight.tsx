@@ -8,6 +8,9 @@ import { cn } from '../../../lib/utils';
 import type { BlinkUser } from '@blinkdotnew/sdk';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
+import { aiRateLimiter } from '../../../lib/rate-limiting/api-limiter';
+import { logAuditEvent, AuditActions, AuditEntities } from '../../../lib/security/audit';
+import { toast } from 'sonner';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -43,6 +46,19 @@ export default function AIInsight() {
   const handleQuery = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!query.trim() || loading || !currentUser?.id) return;
+
+    // Check rate limit
+    if (!aiRateLimiter.check(currentUser.id)) {
+      toast.error('AI usage limit reached. Please wait a moment.', {
+        description: 'Enterprise security policy: 10 AI requests per minute.'
+      });
+      await logAuditEvent(currentUser, {
+        action: AuditActions.RATE_LIMIT_HIT,
+        entity: AuditEntities.USER,
+        metadata: { type: 'ai_qa' }
+      });
+      return;
+    }
 
     const userMessage: Message = {
       role: 'user',
@@ -105,6 +121,17 @@ export default function AIInsight() {
     
     if (!currentUser?.id) {
       setInsight('Sign in to unlock AI-powered insights for your dashboard data.');
+      return;
+    }
+
+    // Check rate limit
+    if (!aiRateLimiter.check(currentUser.id)) {
+      setInsight('AI rate limit reached. Insights will update soon.');
+      await logAuditEvent(currentUser, {
+        action: AuditActions.RATE_LIMIT_HIT,
+        entity: AuditEntities.USER,
+        metadata: { type: 'ai_insight' }
+      });
       return;
     }
 

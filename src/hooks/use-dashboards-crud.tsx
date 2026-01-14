@@ -4,6 +4,8 @@ import { toast } from 'react-hot-toast';
 import { SavedDashboard, Department } from '../types/dashboard';
 import { WidgetConfig } from '../components/dashboard/WidgetGrid';
 import { BlinkUser } from '@blinkdotnew/sdk';
+import { logAuditEvent, AuditActions, AuditEntities } from '../lib/security/audit';
+import { sanitizeText } from '../lib/security/sanitize';
 
 export function useDashboardsCRUD(currentUser: BlinkUser | null) {
   const [savedDashboards, setSavedDashboards] = useState<SavedDashboard[]>([]);
@@ -52,14 +54,23 @@ export function useDashboardsCRUD(currentUser: BlinkUser | null) {
       const user = await blink.auth.me();
       if (!user) throw new Error('User not authenticated');
 
+      const sanitizedName = sanitizeText(name);
       const config = JSON.stringify({ widgets });
-      await blink.db.dashboards.create({
+      const dashboard = await blink.db.dashboards.create({
         user_id: user.id,
-        name,
+        name: sanitizedName,
         department,
         config
       });
       
+      // Log audit event
+      await logAuditEvent(user, {
+        action: AuditActions.DASHBOARD_CREATE,
+        entity: AuditEntities.DASHBOARD,
+        entityId: dashboard.id,
+        metadata: { name: sanitizedName, department }
+      });
+
       toast.success('Dashboard saved successfully');
       fetchSavedDashboards();
     } catch (error) {
@@ -73,7 +84,18 @@ export function useDashboardsCRUD(currentUser: BlinkUser | null) {
   const deleteDashboard = async (id: string) => {
     setIsLoading(true);
     try {
+      const user = await blink.auth.me();
       await blink.db.dashboards.delete({ id });
+      
+      // Log audit event
+      if (user) {
+        await logAuditEvent(user, {
+          action: AuditActions.DASHBOARD_DELETE,
+          entity: AuditEntities.DASHBOARD,
+          entityId: id
+        });
+      }
+
       toast.success('Dashboard deleted');
       fetchSavedDashboards();
     } catch (error) {

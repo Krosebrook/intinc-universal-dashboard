@@ -35,6 +35,8 @@ import {
   Database
 } from 'lucide-react';
 import type { BlinkUser } from '@blinkdotnew/sdk';
+import { logAuditEvent, AuditActions, AuditEntities } from '../../lib/security/audit';
+import { sanitizeText, sanitizeUrl } from '../../lib/security/sanitize';
 
 interface EnterpriseSettingsProps {
   open: boolean;
@@ -107,11 +109,11 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
       
       const settingsData = {
         userId: currentUser.id,
-        logoUrl: settings.logoUrl || null,
+        logoUrl: settings.logoUrl ? sanitizeUrl(settings.logoUrl) : null,
         primaryColor: settings.primaryColor || '#6366f1',
         accentColor: settings.accentColor || '#10b981',
-        companyName: settings.companyName || 'Intinc Corporation',
-        webhookUrl: settings.webhookUrl || null,
+        companyName: settings.companyName ? sanitizeText(settings.companyName) : 'Intinc Corporation',
+        webhookUrl: settings.webhookUrl ? sanitizeUrl(settings.webhookUrl) : null,
         apiKeyEnabled: settings.apiKeyEnabled ? 1 : 0,
       };
 
@@ -124,6 +126,13 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
         await blink.db.enterpriseSettings.create(settingsData);
       }
 
+      // Log audit event
+      await logAuditEvent(currentUser, {
+        action: AuditActions.SETTINGS_UPDATE,
+        entity: AuditEntities.SETTINGS,
+        metadata: { companyName: settings.companyName }
+      });
+
       toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save settings:', error);
@@ -133,10 +142,20 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
     }
   };
 
-  const generateApiKey = () => {
+  const generateApiKey = async () => {
     const key = `intinc_${crypto.randomUUID().replace(/-/g, '')}`;
     setApiKey(key);
     setSettings(prev => ({ ...prev, apiKeyEnabled: true }));
+
+    // Log audit event
+    if (currentUser) {
+      await logAuditEvent(currentUser, {
+        action: AuditActions.API_KEY_TOGGLE,
+        entity: AuditEntities.SETTINGS,
+        metadata: { enabled: true }
+      });
+    }
+
     toast.success('API key generated successfully');
   };
 
