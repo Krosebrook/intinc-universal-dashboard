@@ -34,9 +34,38 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
 
   // Listen to auth state
   useEffect(() => {
-    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
+    const unsubscribe = blink.auth.onAuthStateChanged(async (state) => {
       setCurrentUser(state.user);
       if (state.user) {
+        // Automatically claim pending invitations for this email
+        try {
+          const pendingInvites = await blink.db.workspaceMembers.list({
+            where: { email: state.user.email, userId: 'pending' }
+          });
+          
+          for (const invite of (pendingInvites || [])) {
+            await blink.db.workspaceMembers.update(invite.id, {
+              userId: state.user.id,
+              displayName: state.user.displayName || 'New Member',
+              joinedAt: new Date().toISOString()
+            });
+            
+            await blink.db.auditLogs.create({
+              userId: state.user.id,
+              action: 'invitation_accepted',
+              entity: 'workspace',
+              entityId: invite.workspaceId,
+              metadata: null
+            });
+          }
+          
+          if (pendingInvites && pendingInvites.length > 0) {
+            toast.success(`You've joined ${pendingInvites.length} new workspace(s)!`);
+          }
+        } catch (error) {
+          console.error('Failed to claim invitations:', error);
+        }
+
         // Determine role from user metadata or default to 'editor' for authenticated users
         const userRole = (state.user.metadata as any)?.role as Role || 'editor';
         setCurrentRole(userRole);

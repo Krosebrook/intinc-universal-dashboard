@@ -25,9 +25,13 @@ import {
   MoreHorizontal,
   Trash2,
   Crown,
-  Edit2
+  Edit2,
+  Search,
+  Filter,
+  History
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
+import { cn } from '../../../lib/utils';
 
 interface TeamManagementProps {
   open: boolean;
@@ -48,6 +52,8 @@ export default function TeamManagement({ open, onOpenChange, workspaceId = 'defa
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<Role>('viewer');
   const [isInviting, setIsInviting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all');
 
   // Fetch members when dialog opens
   React.useEffect(() => {
@@ -88,6 +94,13 @@ export default function TeamManagement({ open, onOpenChange, workspaceId = 'defa
       await removeMember(memberId);
     }
   };
+
+  const filteredMembers = workspaceMembers.filter(member => {
+    const matchesSearch = (member.displayName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         member.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'all' || member.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   const getRoleBadgeColor = (role: Role) => {
     switch (role) {
@@ -160,40 +173,80 @@ export default function TeamManagement({ open, onOpenChange, workspaceId = 'defa
             {/* Team Members List */}
             <Card className="bg-white/5 border-white/10">
               <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Shield size={18} />
-                    Team Members
-                  </span>
-                  <Badge variant="secondary" className="font-normal">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Shield size={18} />
+                      Team Members
+                    </CardTitle>
+                    <CardDescription>Manage team members and their access levels.</CardDescription>
+                  </div>
+                  <Badge variant="secondary" className="font-normal h-6">
                     {workspaceMembers.length} member{workspaceMembers.length !== 1 ? 's' : ''}
                   </Badge>
-                </CardTitle>
-                <CardDescription>Manage team members and their access levels.</CardDescription>
+                </div>
+                
+                <div className="flex items-center gap-3 pt-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input 
+                      placeholder="Search by name or email..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 bg-white/5 border-white/10 h-10 rounded-xl"
+                    />
+                  </div>
+                  <Select value={roleFilter} onValueChange={(v: any) => setRoleFilter(v)}>
+                    <SelectTrigger className="w-[140px] bg-white/5 border-white/10 h-10 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <Filter size={14} className="text-muted-foreground" />
+                        <SelectValue placeholder="All Roles" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="glass-card border-white/10">
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="owner">Owners</SelectItem>
+                      <SelectItem value="admin">Admins</SelectItem>
+                      <SelectItem value="editor">Editors</SelectItem>
+                      <SelectItem value="viewer">Viewers</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                {workspaceMembers.length === 0 ? (
+                {filteredMembers.length === 0 ? (
                   <div className="p-8 rounded-xl border border-dashed border-white/10 text-center">
                     <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground">No team members yet.</p>
+                    <p className="text-muted-foreground">No members found matching your filters.</p>
                   </div>
                 ) : (
-                  workspaceMembers.map((member) => (
+                  filteredMembers.map((member) => (
                     <div 
                       key={member.id}
-                      className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 group hover:bg-white/10 transition-colors"
+                      className={cn(
+                        "flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 group hover:bg-white/10 transition-colors",
+                        member.userId === 'pending' && "opacity-75 border-dashed"
+                      )}
                     >
                       <div className="flex items-center gap-4">
                         <Avatar className="w-10 h-10 border border-white/10">
-                          <AvatarFallback className="bg-primary/20 text-primary">
+                          <AvatarFallback className={cn(
+                            "bg-primary/20 text-primary",
+                            member.userId === 'pending' && "bg-zinc-500/20 text-zinc-400"
+                          )}>
                             {(member.displayName || member.email).substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium flex items-center gap-2">
-                            {member.displayName || 'Unknown User'}
+                            {member.userId === 'pending' ? 'Invitation Pending' : (member.displayName || 'Unknown User')}
                             {member.role === 'owner' && (
                               <Crown size={14} className="text-yellow-500" />
+                            )}
+                            {member.userId === 'pending' && (
+                              <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-1.5 h-4 bg-zinc-500/10 text-zinc-400 border-zinc-500/20">
+                                Pending
+                              </Badge>
                             )}
                           </p>
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -220,6 +273,17 @@ export default function TeamManagement({ open, onOpenChange, workspaceId = 'defa
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="glass-card border-white/10" align="end">
+                              {member.userId === 'pending' && (
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    toast.success(`Invitation resent to ${member.email}`);
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <History size={14} />
+                                  Resend Invitation
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem 
                                 onClick={() => handleRoleChange(member.id, 'viewer')}
                                 className="gap-2"

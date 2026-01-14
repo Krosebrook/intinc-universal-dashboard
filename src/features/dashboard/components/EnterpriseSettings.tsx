@@ -32,10 +32,12 @@ import {
   Building2,
   Globe,
   Bell,
-  Database
+  Database,
+  Activity
 } from 'lucide-react';
 import type { BlinkUser } from '@blinkdotnew/sdk';
 import { FeatureSpotlight } from './FeatureSpotlight';
+import AuditLogViewer from './AuditLogViewer';
 
 interface EnterpriseSettingsProps {
   open: boolean;
@@ -233,6 +235,10 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
             <TabsTrigger value="security" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
               <Shield size={16} />
               Security
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
+              <Activity size={16} />
+              Audit Logs
             </TabsTrigger>
           </TabsList>
 
@@ -652,6 +658,21 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
                     <Button variant="destructive" className="mt-4 w-full">
                       Revoke All Other Sessions
                     </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="audit" className="m-0 space-y-6">
+                <Card className="bg-white/5 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Activity size={18} />
+                      System Audit Trail
+                    </CardTitle>
+                    <CardDescription>Track all administrative actions and security events across your organization.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AuditLogViewer />
                   </CardContent>
                 </Card>
               </TabsContent>
