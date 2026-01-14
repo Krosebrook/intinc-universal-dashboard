@@ -18,6 +18,7 @@ import { DashboardDevMode } from '../features/dashboard/components/DashboardDevM
 import { DashboardCollaboration } from '../features/collaboration/components/DashboardCollaboration';
 import { DashboardSavedViews } from '../features/dashboard/components/DashboardSavedViews';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { FeatureSpotlight } from '../features/dashboard/components/FeatureSpotlight';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
@@ -120,6 +121,30 @@ export default function DashboardPage() {
           onAddWidget={() => setIsWidgetBuilderOpen(true)}
         />
 
+        <FeatureSpotlight 
+          featureId="add_widget"
+          title="Custom Visuals"
+          description="Create your own data visualizations in seconds using our point-and-click builder."
+          targetId="add-widget-button"
+          position="left"
+        />
+
+        <FeatureSpotlight 
+          featureId="data_explorer"
+          title="Universal Ingestor"
+          description="Switch to Data Explorer to upload CSVs or connect raw API streams for analysis."
+          targetId="data-explorer-tab"
+          position="right"
+        />
+
+        <FeatureSpotlight 
+          featureId="export_system"
+          title="Broadcast Reports"
+          description="Export your current view to a high-fidelity PDF report ready for stakeholders."
+          targetId="export-pdf-button"
+          position="bottom"
+        />
+
         <div className="space-y-8">
           <DashboardDevMode 
             isVisible={isDevMode}
@@ -179,7 +204,16 @@ export default function DashboardPage() {
 
                 {!showComments && (
                   <div className="col-span-12 lg:col-span-4 space-y-6">
-                    <AIInsight />
+                    <div id="ai-insights-panel">
+                      <AIInsight />
+                    </div>
+                    <FeatureSpotlight 
+                      featureId="ai_insights"
+                      title="AI Brain"
+                      description="Our smart assistant automatically finds anomalies and opportunities in your current data view."
+                      targetId="ai-insights-panel"
+                      position="left"
+                    />
                     <LiveSimulator />
                     <DashboardSavedViews 
                       savedDashboards={savedDashboards}

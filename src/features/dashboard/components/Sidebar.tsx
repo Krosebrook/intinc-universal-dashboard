@@ -122,12 +122,14 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
       <div className="space-y-1 mb-10">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Core Platform</p>
         <NavItem 
+          id="global-overview-tab"
           icon={<LayoutDashboard size={20} />} 
           label="Global Overview" 
           active={currentView === 'overview'}
           onClick={() => setCurrentView('overview')}
         />
         <NavItem 
+          id="data-explorer-tab"
           icon={<Database size={20} />} 
           label="Data Explorer" 
           active={currentView === 'explorer'}
@@ -241,9 +243,10 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
   );
 }
 
-function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
+function NavItem({ icon, label, active = false, onClick, id }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void, id?: string }) {
   return (
     <button 
+      id={id}
       onClick={onClick}
       className={cn(
         "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",

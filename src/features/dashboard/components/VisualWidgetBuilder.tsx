@@ -10,6 +10,7 @@ import { WidgetConfig, WidgetType } from '../../../types/dashboard';
 import { FileUp, Table as TableIcon, Layout, Settings2, Sparkles, Code, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { WidgetRenderer } from './WidgetRenderer';
+import { FeatureSpotlight } from './FeatureSpotlight';
 
 interface VisualWidgetBuilderProps {
   open: boolean;
@@ -77,6 +78,13 @@ export default function VisualWidgetBuilder({ open, onOpenChange, onAdd }: Visua
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[1100px] glass-card border-white/10 p-0 overflow-hidden">
+        <FeatureSpotlight 
+          featureId="widget_data_parse"
+          title="Data Mapping"
+          description="Paste your raw CSV here and click 'Parse' to instantly map your data to the chart visualization."
+          targetId="csv-parse-section"
+          position="top"
+        />
         <DialogHeader className="sr-only">
           <DialogTitle>Visual Widget Builder</DialogTitle>
           <DialogDescription>Create and configure a new dashboard widget</DialogDescription>
@@ -202,7 +210,7 @@ export default function VisualWidgetBuilder({ open, onOpenChange, onAdd }: Visua
                       <Button variant="outline" size="sm" className="glass">Select File</Button>
                     </div>
 
-                    <div className="space-y-2">
+                    <div id="csv-parse-section" className="space-y-2">
                       <Label>Raw CSV Input</Label>
                       <textarea 
                         className="w-full h-40 bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary custom-scrollbar"

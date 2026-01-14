@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { blink } from '../../../lib/blink';
 import { Badge } from '../../../components/ui/badge';
+import { FeatureSpotlight } from './FeatureSpotlight';
 
 interface RecommendedDashboard {
   id: string;
@@ -155,6 +156,13 @@ export default function UniversalIngestor() {
 
   return (
     <Card className="glass-card border-white/10 overflow-hidden">
+      <FeatureSpotlight 
+        featureId="universal_ingestor"
+        title="AI Data Intake"
+        description="Simply drop any file here—from CSVs to complex PDFs. Our AI will automatically structure the data and recommend the best dashboard layout."
+        targetId="ingestor-dropzone"
+        position="bottom"
+      />
       <CardHeader className="pb-4">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-primary animate-pulse" />
@@ -170,6 +178,7 @@ export default function UniversalIngestor() {
         <AnimatePresence mode="wait">
           {!file ? (
             <motion.div 
+              id="ingestor-dropzone"
               key="uploader"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

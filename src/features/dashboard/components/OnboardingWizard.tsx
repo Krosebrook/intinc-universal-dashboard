@@ -31,27 +31,42 @@ interface OnboardingStep {
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Welcome to Intinc",
-    description: "Your universal dashboard engine for modern enterprise data. Let's get you settled in.",
+    description: "Your universal dashboard engine for modern enterprise data. We've optimized your workspace for peak intelligence.",
     icon: BarChart3,
   },
   {
-    title: "Dynamic Dashboards",
-    description: "Switch between departments like HR, Sales, and IT with a single click. Every view is perfectly tailored.",
+    title: "Departmental Intelligence",
+    description: "Switch between Sales, HR, IT and more using the sidebar. Each department features its own unique KPI set and AI models.",
     icon: Layers,
   },
   {
-    title: "AI-Powered Insights",
-    description: "Our Smart Assistant analyzes your datasets to provide instant takeaways and actionable recommendations.",
+    title: "Data Explorer Mode",
+    description: "Need to analyze custom data? Switch to Explorer mode to drop CSV files or connect direct API streams effortlessly.",
+    icon: Database,
+  },
+  {
+    title: "AI Smart Insights",
+    description: "Our proprietary AI models automatically analyze your widgets to surface the 'Top 3 Takeaways' for your team.",
     icon: Sparkles,
   },
   {
-    title: "Build Your Own",
-    description: "Use our Visual Widget Builder to create custom visualizations from any CSV or connected API source.",
+    title: "Visual Widget Builder",
+    description: "Create stunning Recharts-powered visualizations in seconds using our point-and-click builder—no code required.",
     icon: PlusCircle,
   },
   {
-    title: "All Set!",
-    description: "You're ready to start building. Export your data to PDF or collaborate with your team in real-time.",
+    title: "Real-time Collaboration",
+    description: "Tag teammates, leave comments on specific widgets, and share live dashboard links for instant decision making.",
+    icon: Users,
+  },
+  {
+    title: "Enterprise Export",
+    description: "Generate high-fidelity, production-ready PDF reports that preserve your custom branding and design system.",
+    icon: Share2,
+  },
+  {
+    title: "Full Control",
+    description: "You're ready to master your data. Welcome to the future of enterprise intelligence.",
     icon: CheckCircle2,
   },
 ];

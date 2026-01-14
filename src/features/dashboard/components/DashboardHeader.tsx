@@ -101,6 +101,7 @@ export function DashboardHeader({
         </Button>
 
         <Button 
+          id="add-widget-button"
           size="icon" 
           className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground shadow-glow shadow-primary/20 hover:bg-primary-glow transition-all active:scale-90"
           onClick={onAddWidget}

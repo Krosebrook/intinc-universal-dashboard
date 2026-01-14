@@ -8,6 +8,7 @@ import { Input } from '../../../components/ui/input';
 import { blink } from '../../../lib/blink';
 import { toast } from 'sonner';
 import { WidgetConfig } from '../../../types/dashboard';
+import { FeatureSpotlight } from './FeatureSpotlight';
 
 export function SmartAssistant() {
   const { suggestedStep, setWidgets, department, kpis } = useDashboard();
@@ -129,12 +130,20 @@ export function SmartAssistant() {
   return (
     <AnimatePresence>
       <motion.div
+        id="smart-assistant-trigger"
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.9 }}
         className="fixed bottom-6 right-6 z-50 w-full max-w-sm"
       >
         <Card className="glass-card border-primary/30 shadow-2xl overflow-hidden relative group rounded-2xl">
+          <FeatureSpotlight 
+            featureId="smart_assistant"
+            title="AI Co-Pilot"
+            description="Use the Smart Assistant to generate new visualizations or analyze trends using natural language."
+            targetId="smart-assistant-trigger"
+            position="left"
+          />
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-50 pointer-events-none" />
           
           <div className="p-5 relative space-y-4">

@@ -66,7 +66,12 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
   const [suggestedStep, setSuggestedStep] = useState<SuggestedStep | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('onboarding_completed');
+    }
+    return false;
+  });
 
   useEffect(() => {
     const unsubscribe = blink.auth.onAuthStateChanged((state) => {

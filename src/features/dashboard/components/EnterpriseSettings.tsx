@@ -35,6 +35,7 @@ import {
   Database
 } from 'lucide-react';
 import type { BlinkUser } from '@blinkdotnew/sdk';
+import { FeatureSpotlight } from './FeatureSpotlight';
 
 interface EnterpriseSettingsProps {
   open: boolean;
@@ -192,6 +193,13 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0 glass-card border-white/10">
+        <FeatureSpotlight 
+          featureId="enterprise_branding"
+          title="White-Label Branding"
+          description="Customize the look and feel of your workspace to match your brand identity perfectly."
+          targetId="branding-tab"
+          position="bottom"
+        />
         <DialogHeader className="p-6 pb-4 border-b border-white/10">
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -206,7 +214,7 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
 
         <Tabs defaultValue="branding" className="flex-1 flex flex-col min-h-0">
           <TabsList className="px-6 py-0 bg-transparent border-b border-white/10 justify-start gap-0 h-12 rounded-none">
-            <TabsTrigger value="branding" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
+            <TabsTrigger id="branding-tab" value="branding" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
               <Palette size={16} />
               Branding
             </TabsTrigger>

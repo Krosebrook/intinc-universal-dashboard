@@ -52,6 +52,7 @@ export function DashboardNavbar({ department, onOpenMobileMenu }: DashboardNavba
         
         <div className="flex items-center gap-1.5">
           <Button 
+            id="export-pdf-button"
             variant="ghost" 
             size="sm" 
             onClick={handleExportPDF}
