@@ -122,6 +122,13 @@ export function createWidgetSandbox() {
   return {
     /**
      * Execute a safe transformation function on widget data
+     * 
+     * WARNING: This sandbox provides basic security but is not foolproof.
+     * For production use with untrusted code, consider:
+     * - Using Web Workers for complete isolation
+     * - Using vm2 for server-side execution
+     * - Implementing stricter code validation
+     * - Running in a separate iframe with restricted permissions
      */
     executeTransform: (code: string, data: any[]) => {
       try {

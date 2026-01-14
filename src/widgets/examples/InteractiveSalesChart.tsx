@@ -3,7 +3,8 @@
  * Demonstrates filtering, cross-widget communication, and click interactions
  */
 
-import { useWidgetSDK, useFilteredData, useWidgetPerformance } from '@/hooks/use-widget-sdk';
+import { useWidgetSDK, useFilteredData } from '@/hooks/use-widget-sdk';
+import { useWidgetPerformance } from '@/components/dashboard/WidgetPerformanceProfiler';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -77,7 +78,7 @@ export function InteractiveSalesChart({
   // Remove filter
   const handleRemoveFilter = (filterId: string) => {
     const filter = sdk.filters.active.find(f => f.id === filterId);
-    sdk.removeFilter(filterId);
+    sdk.filters.remove(filterId);
     
     if (filter) {
       sdk.emit('filter', {

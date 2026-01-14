@@ -467,6 +467,12 @@ try {
 }
 ```
 
+**⚠️ Security Note:** The sandbox provides basic protection but is not foolproof. For production environments with untrusted user code, consider:
+- Using Web Workers for complete isolation
+- Implementing stricter code validation
+- Running in separate iframes with restricted permissions
+- Using server-side sandboxing solutions like vm2 (Node.js)
+
 ## 📚 Complete Examples
 
 ### Example 1: Interactive Bar Chart

@@ -26,6 +26,7 @@ export function useWidgetSDK(widgetId: string, config?: {
     active: interaction.activeFilters,
     global: interaction.globalFilters,
     create: interaction.createFilter,
+    remove: (filterId: string) => widgetState.removeFilter(filterId),
     clear: () => {
       interaction.activeFilters.forEach(f => widgetState.removeFilter(f.id));
     }

@@ -83,6 +83,16 @@ export class WidgetLoader {
    */
   private async importWidget(manifest: WidgetManifest): Promise<ComponentType<any>> {
     try {
+      // Validate the component path to prevent security issues
+      const allowedPrefixes = ['@/', './widgets/', '../widgets/', '/src/widgets/'];
+      const isValidPath = allowedPrefixes.some(prefix => 
+        manifest.componentPath.startsWith(prefix)
+      );
+      
+      if (!isValidPath) {
+        throw new Error(`Invalid component path: ${manifest.componentPath}. Path must start with one of: ${allowedPrefixes.join(', ')}`);
+      }
+      
       // Dynamic import with code splitting
       const module = await import(/* @vite-ignore */ manifest.componentPath);
       

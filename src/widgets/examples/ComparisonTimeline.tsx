@@ -3,7 +3,8 @@
  * Demonstrates comparison mode and date range handling
  */
 
-import { useWidgetSDK, useComparisonData, useWidgetPerformance } from '@/hooks/use-widget-sdk';
+import { useWidgetSDK, useComparisonData } from '@/hooks/use-widget-sdk';
+import { useWidgetPerformance } from '@/components/dashboard/WidgetPerformanceProfiler';
 import { LineChart, Line, XAxis, YAxis, Legend, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
