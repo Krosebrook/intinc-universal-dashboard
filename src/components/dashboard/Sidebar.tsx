@@ -57,12 +57,15 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
 
   return (
     <aside className="w-72 h-screen glass-sidebar flex flex-col p-6 hidden lg:flex relative z-50">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-          <Activity className="w-6 h-6 text-primary-foreground" />
+      <div className="flex items-center gap-3 mb-8 px-2">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 blur-lg rounded-xl" />
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center relative shadow-lg shadow-primary/20">
+            <Activity className="w-6 h-6 text-primary-foreground" />
+          </div>
         </div>
         <div>
-          <span className="font-bold text-xl tracking-tight block leading-none">intinc</span>
+          <span className="font-bold text-xl tracking-tight block leading-none text-glow">intinc</span>
           <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mt-1 block">Universal Engine</span>
         </div>
       </div>
@@ -70,9 +73,9 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
       <div className="mb-8">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+            <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] hover:border-white/10 transition-all group shadow-sm">
               <div className="flex items-center gap-3 overflow-hidden">
-                <Briefcase size={18} className="text-primary" />
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-sm font-bold truncate">{activeWorkspace}</span>
               </div>
               <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -130,21 +133,21 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
 
       <div className="space-y-1 mb-10 overflow-hidden flex flex-col min-h-0">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Departments</p>
-        <div className="space-y-1 overflow-y-auto">
+        <div className="space-y-1 overflow-y-auto pr-2 scrollbar-hide">
           {departments.map((dept) => (
             <button
               key={dept.id}
               onClick={() => setDepartment(dept.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
+                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative overflow-hidden",
                 department === dept.id 
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  ? "bg-primary text-primary-foreground shadow-glow shadow-primary/20" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
               )}
             >
               <dept.icon size={20} className={cn(
-                "transition-colors",
-                department === dept.id ? "text-primary-foreground" : "group-hover:text-primary"
+                "transition-all duration-300",
+                department === dept.id ? "text-primary-foreground scale-110" : "group-hover:text-primary group-hover:scale-110"
               )} />
               <span className="text-sm font-semibold">{dept.label}</span>
             </button>
@@ -154,16 +157,16 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
 
       <div className="mb-10">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Quick Connectors</p>
-        <div className="flex gap-2 px-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2.5 px-2 overflow-x-auto pb-2 scrollbar-hide">
           <TooltipProvider>
             {mockSources.map((source) => (
               <Tooltip key={source.id}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => generateMockData(source.id)}
-                    className="w-12 h-12 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-primary/50 transition-all hover:scale-110 active:scale-95"
+                    className="w-12 h-12 shrink-0 rounded-xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center hover:bg-white/[0.08] hover:border-primary/30 transition-all hover:scale-105 active:scale-95 shadow-sm group/btn"
                   >
-                    <source.icon className={cn("w-5 h-5", source.color)} />
+                    <source.icon className={cn("w-5 h-5 transition-transform group-hover/btn:scale-110", source.color)} />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="glass-card border-white/10 text-xs font-bold uppercase tracking-widest">
@@ -184,10 +187,10 @@ export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => voi
                 <div key={dash.id} className="group/item relative">
                   <button
                     onClick={() => loadDashboard(dash.id)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all group"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition-all group"
                   >
                     <FileText size={16} className="group-hover:text-primary transition-colors" />
-                    <div className="flex flex-col items-start overflow-hidden">
+                    <div className="flex flex-col items-start overflow-hidden text-left">
                       <span className="text-sm font-medium truncate w-full pr-6">{dash.name}</span>
                       <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{dash.department}</span>
                     </div>
@@ -227,13 +230,15 @@ function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNo
     <button 
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
-        active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative overflow-hidden",
+        active 
+          ? "bg-primary text-primary-foreground shadow-glow shadow-primary/20" 
+          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
       )}
     >
       <div className={cn(
-        "transition-colors",
-        active ? "text-primary-foreground" : "group-hover:text-primary"
+        "transition-all duration-300",
+        active ? "text-primary-foreground scale-110" : "group-hover:text-primary group-hover:scale-110"
       )}>
         {icon}
       </div>

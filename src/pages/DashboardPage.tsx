@@ -180,26 +180,34 @@ export default function DashboardPage() {
       <SmartAssistant />
 
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent className="glass-card border-white/10">
-          <DialogHeader>
-            <DialogTitle>Save Dashboard View</DialogTitle>
+        <DialogContent className="glass-card border-white/10 max-w-md rounded-3xl p-8">
+          <DialogHeader className="mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 border border-primary/20">
+              <Save size={24} className="text-primary" />
+            </div>
+            <DialogTitle className="text-2xl font-black tracking-tight text-foreground/90">Commit View</DialogTitle>
+            <p className="text-muted-foreground/60 text-sm font-medium mt-1">Persist your current workspace configuration to the cloud.</p>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Dashboard Name</Label>
+          <div className="space-y-6">
+            <div className="space-y-2.5">
+              <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Workspace Identity</Label>
               <Input 
                 id="name" 
-                placeholder="e.g., Monthly Sales Report" 
+                placeholder="e.g., Q1 Revenue Optimization" 
                 value={dashboardName}
                 onChange={(e) => setDashboardName(e.target.value)}
-                className="glass border-white/10"
+                className="bg-white/[0.03] border-white/[0.05] focus:border-primary/40 h-12 rounded-2xl transition-all"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveDialog(false)} className="glass">Cancel</Button>
-            <Button onClick={handleSave} disabled={isLoading || !dashboardName.trim()}>
-              {isLoading ? 'Saving...' : 'Save View'}
+          <DialogFooter className="mt-8 flex gap-3">
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)} className="glass h-12 flex-1 rounded-2xl border-white/[0.05] hover:bg-white/[0.05]">Discard</Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={isLoading || !dashboardName.trim()}
+              className="bg-primary hover:bg-primary-glow text-primary-foreground h-12 flex-1 rounded-2xl shadow-glow shadow-primary/20 transition-all font-bold uppercase tracking-widest text-[10px]"
+            >
+              {isLoading ? 'Persisting...' : 'Confirm Commit'}
             </Button>
           </DialogFooter>
         </DialogContent>

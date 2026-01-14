@@ -29,61 +29,78 @@ export function WidgetCard({
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        type: "spring",
+        damping: 25,
+        stiffness: 120,
+        delay: index * 0.05 
+      }}
       className={getGridSpan(widget.gridSpan)}
     >
-      <Card className="glass-card h-full group">
-        <CardHeader className="flex flex-row items-start justify-between pb-2">
-          <div className="space-y-1">
-            <CardTitle className="text-lg font-bold tracking-tight group-hover:text-primary transition-colors">
+      <Card className="glass-card h-full group relative overflow-hidden flex flex-col">
+        {/* Subtle hover gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        
+        <CardHeader className="flex flex-row items-start justify-between pb-2 space-y-0">
+          <div className="space-y-1.5 flex-1 pr-4">
+            <CardTitle className="text-lg font-bold tracking-tight text-foreground/90 group-hover:text-primary transition-colors flex items-center gap-2">
               {widget.title}
+              {widget.type === 'kpi' && (
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              )}
             </CardTitle>
-            <CardDescription className="text-muted-foreground text-xs leading-relaxed">
+            <CardDescription className="text-muted-foreground/70 text-[11px] leading-relaxed line-clamp-2">
               {widget.description}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1.5">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 rounded-lg hover:bg-white/5"
+              className="h-8 w-8 rounded-lg hover:bg-white/[0.08] text-muted-foreground hover:text-foreground transition-all"
               onClick={() => onSelect(widget)}
             >
-              <Maximize2 size={14} className="text-muted-foreground" />
+              <Maximize2 size={14} />
             </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/5">
-                  <MoreHorizontal size={14} className="text-muted-foreground" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/[0.08] text-muted-foreground hover:text-foreground transition-all">
+                  <MoreHorizontal size={14} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="glass-card border-white/10">
-                <DropdownMenuItem onClick={() => onEdit(widget)} className="gap-2">
+              <DropdownMenuContent className="glass-card border-white/10" align="end">
+                <DropdownMenuItem onClick={() => onEdit(widget)} className="gap-2 focus:bg-primary/10 cursor-pointer">
                   <Edit2 size={14} />
-                  Edit Widget
+                  Edit Configuration
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDelete(widget.id)} className="gap-2 text-destructive focus:text-destructive">
+                <DropdownMenuItem onClick={() => onDelete(widget.id)} className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer">
                   <Trash2 size={14} />
-                  Remove Widget
+                  Remove from Dashboard
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent className="h-[300px] mt-2 relative">
-          <WidgetRenderer 
-            widget={widget} 
-            globalFilters={globalFilters} 
-            setGlobalFilter={setGlobalFilter} 
-          />
+        <CardContent className="flex-1 min-h-[300px] mt-2 relative flex flex-col">
+          <div className="flex-1 relative">
+            <WidgetRenderer 
+              widget={widget} 
+              globalFilters={globalFilters} 
+              setGlobalFilter={setGlobalFilter} 
+            />
+          </div>
           
-          <div className="absolute bottom-4 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary/60 bg-primary/5 px-2 py-1 rounded-full backdrop-blur-sm border border-primary/10">
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+              <Activity size={10} className="text-primary/60" />
+              Real-time Analysis
+            </div>
+            <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary/80 bg-primary/10 px-2 py-1 rounded-full border border-primary/20 shadow-sm shadow-primary/5 transition-transform group-hover:scale-105">
               <ArrowUpRight size={10} />
-              Live Data
+              Active
             </div>
           </div>
         </CardContent>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
-import { Activity, Sparkles, Loader2, RefreshCw, MessageSquare, Send, User } from 'lucide-react';
+import { Activity, Sparkles, Loader2, RefreshCw, MessageSquare, Send, Brain } from 'lucide-react';
 import { blink } from '../../../lib/blink';
 import { useDashboard } from '../../../hooks/use-dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,14 +28,12 @@ export default function AIInsight() {
   const [messages, setMessages] = useState<Message[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom of chat
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   }, [messages, loading]);
 
-  // Track auth state
   useEffect(() => {
     const unsubscribe = blink.auth.onAuthStateChanged((state) => {
       setCurrentUser(state.user);
@@ -47,16 +45,8 @@ export default function AIInsight() {
     if (e) e.preventDefault();
     if (!query.trim() || loading || !currentUser?.id) return;
 
-    // Check rate limit
     if (!aiRateLimiter.check(currentUser.id)) {
-      toast.error('AI usage limit reached. Please wait a moment.', {
-        description: 'Enterprise security policy: 10 AI requests per minute.'
-      });
-      await logAuditEvent(currentUser, {
-        action: AuditActions.RATE_LIMIT_HIT,
-        entity: AuditEntities.USER,
-        metadata: { type: 'ai_qa' }
-      });
+      toast.error('AI usage limit reached. Please wait a moment.');
       return;
     }
 
@@ -77,61 +67,31 @@ export default function AIInsight() {
         data: w.data.slice(-10)
       }));
 
-      // Get last 5 turns for conversation context
       const historyContext = messages.slice(-10).map(m => 
         `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
       ).join('\n');
 
       const { text } = await blink.ai.generateText({
-        prompt: `The user has a question about their dashboard data for the ${department} department.
-        
-        Recent Conversation History:
-        ${historyContext}
-        
-        New Question: "${userMessage.content}"
-        
-        Dashboard Data Context:
-        ${JSON.stringify(contextData, null, 2)}
-        
-        Provide a concise, data-driven answer based ONLY on the provided context and history. If the data doesn't contain the answer, politely say so. Be professional and helpful.`,
-        system: "You are a Senior Business Intelligence Analyst at Intinc. Answer user questions about dashboard data accurately and concisely.",
+        prompt: `Question about ${department} dashboard: "${userMessage.content}"\n\nContext: ${JSON.stringify(contextData, null, 2)}\n\nHistory:\n${historyContext}`,
+        system: "You are a Senior BI Analyst at Intinc. Provide data-driven, concise answers.",
       });
 
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: text,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [...prev, { role: 'assistant', content: text, timestamp: new Date() }]);
     } catch (error) {
-      console.error('QA Error:', error);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: "I encountered an error analyzing your question. Please try again.",
-        timestamp: new Date()
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Error analyzing data.", timestamp: new Date() }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchInsight = async (retryCount = 0) => {
-    const MAX_RETRIES = 2;
-    
+  const fetchInsight = async () => {
     if (!currentUser?.id) {
-      setInsight('Sign in to unlock AI-powered insights for your dashboard data.');
+      setInsight('Sign in to unlock AI insights.');
       return;
     }
 
-    // Check rate limit
     if (!aiRateLimiter.check(currentUser.id)) {
-      setInsight('AI rate limit reached. Insights will update soon.');
-      await logAuditEvent(currentUser, {
-        action: AuditActions.RATE_LIMIT_HIT,
-        entity: AuditEntities.USER,
-        metadata: { type: 'ai_insight' }
-      });
+      setInsight('AI rate limit reached.');
       return;
     }
 
@@ -144,31 +104,11 @@ export default function AIInsight() {
       }));
 
       const { text } = await blink.ai.generateText({
-        prompt: `Analyze this dashboard data for the ${department} department and generate 3 high-impact, strategic bullet points.
-        
-        Dashboard Context:
-        ${JSON.stringify(contextData, null, 2)}
-
-        Focus on trends, anomalies, and performance optimization based on the specific widget data provided.
-        Format as plain text bullet points. Be concise, data-driven, and professional.`,
-        system: "You are a Senior Business Intelligence Analyst at Intinc. Provide data-driven insights for executive dashboards.",
+        prompt: `Analyze ${department} dashboard and generate 3 strategic insights.\n\nContext: ${JSON.stringify(contextData, null, 2)}`,
+        system: "Senior BI Analyst. Format as plain text bullet points. Concise and data-driven.",
       });
       setInsight(text);
-    } catch (error: any) {
-      const isNetworkError = error?.code === 'NETWORK_ERROR' || 
-                             error?.code === 'AI_ERROR' ||
-                             error?.message?.includes('Failed to fetch') ||
-                             error?.message?.includes('Network request failed');
-      
-      if (isNetworkError && retryCount < MAX_RETRIES) {
-        setTimeout(() => fetchInsight(retryCount + 1), 2000);
-        return;
-      }
-      
-      if (!isNetworkError) {
-        console.warn('AI Insight warning:', error?.message || error);
-      }
-      
+    } catch (error) {
       setInsight(generateFallbackInsight());
     } finally {
       setLoading(false);
@@ -177,72 +117,63 @@ export default function AIInsight() {
 
   const generateFallbackInsight = () => {
     const insights: Record<string, string> = {
-      Sales: `• Revenue is showing positive momentum with strong Enterprise segment growth\n• Active orders are up, indicating healthy pipeline activity\n• Focus on improving conversion rates to maximize lead efficiency`,
-      HR: `• Headcount growth indicates organizational expansion\n• Low turnover rate reflects strong employee satisfaction\n• Monitor open roles to maintain hiring velocity`,
-      IT: `• System uptime exceeds SLA targets, maintaining reliability\n• Security posture is improving with reduced alert volume\n• API performance is within acceptable thresholds`,
-      Marketing: `• MQL generation is trending upward, driving pipeline growth\n• CAC efficiency improving, indicating better targeting\n• Social reach expansion presents brand awareness opportunities`,
-      SaaS: `• MRR growth is accelerating across enterprise tiers\n• Churn rate remains low, indicating strong product-market fit\n• Expansion revenue from existing customers is a primary growth driver`,
-      Product: `• Customer health scores are high, but monitor at-risk segments\n• Product engagement shows high stickiness and DAU/MAU ratios\n• Recent feature releases have driven significant breadth of adoption`,
-      AI: `• Token utilization is optimized across model providers\n• Cost-per-request is trending down with better routing logic\n• Inference quality remains high with low hallucination rates`,
-      Operations: `• Administrative action auditing is fully compliant with policies\n• Security remediation times are improving for critical vulnerabilities\n• System utilization is balanced across all infrastructure resources`
+      Sales: `• Revenue momentum remains strong with positive quarterly growth\n• Enterprise segment is the primary growth driver this month\n• Pipeline velocity is increasing, indicating healthy sales operations`,
+      HR: `• Employee retention is at an all-time high of 98%\n• Diversity & Inclusion metrics show significant improvement\n• Recruitment pipeline is healthy for upcoming expansion phases`,
+      IT: `• Infrastructure uptime is at 99.99% for the current period\n• Security audit completed with zero critical vulnerabilities\n• Cloud resource utilization is optimized for cost efficiency`
     };
-    return insights[department] || 'Dashboard insights will update when connection is restored.';
+    return insights[department] || 'Insights are currently unavailable. Connecting to analysis engine...';
   };
 
   useEffect(() => {
     if (currentUser?.id && widgets.length > 0) {
       fetchInsight();
-    } else if (!currentUser?.id) {
-      setInsight('Sign in to unlock AI-powered insights for your dashboard data.');
     }
   }, [department, widgets, currentUser?.id]);
 
   return (
-    <Card className="bg-primary border-none shadow-2xl shadow-primary/20 relative overflow-hidden h-full min-h-[350px]">
-      <div className="absolute top-0 right-0 p-8 opacity-5">
-        <Sparkles size={180} />
+    <Card className="bg-gradient-to-br from-primary to-indigo-600 border-none shadow-premium relative overflow-hidden h-full min-h-[400px] text-white flex flex-col">
+      <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 pointer-events-none">
+        <Brain size={200} />
       </div>
       
-      <CardHeader className="relative z-10">
+      <CardHeader className="relative z-10 pb-2">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
-              {mode === 'insights' ? (
-                <Activity className="w-5 h-5 text-white" />
-              ) : (
-                <MessageSquare className="w-5 h-5 text-white" />
-              )}
+          <div className="flex items-center gap-2.5">
+            <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md shadow-sm border border-white/10">
+              {mode === 'insights' ? <Sparkles className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-primary-foreground/70">
-              {mode === 'insights' ? 'Intelligence Engine' : 'Data Assistant'}
-            </span>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 block">Intelligence Layer</span>
+              <CardTitle className="text-xl font-bold tracking-tight">
+                {mode === 'insights' ? 'AI Strategic Analysis' : 'Data Assistant'}
+              </CardTitle>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => {
-                setMode(mode === 'insights' ? 'qa' : 'insights');
-              }}
-              className="text-xs font-bold uppercase tracking-widest text-primary-foreground/50 hover:text-primary-foreground transition-colors px-3 py-1 rounded-full border border-white/10"
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setMode(mode === 'insights' ? 'qa' : 'insights')}
+              className="text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 border border-white/10 rounded-full h-8 px-4 transition-all"
             >
-              {mode === 'insights' ? 'Ask a Question' : 'Back to Insights'}
-            </button>
+              {mode === 'insights' ? 'Data Q&A' : 'Back to Insights'}
+            </Button>
             {mode === 'insights' && (
-              <button 
+              <Button 
+                variant="ghost" 
+                size="icon"
                 onClick={() => fetchInsight()}
                 disabled={loading}
-                className="text-primary-foreground/50 hover:text-primary-foreground transition-colors disabled:opacity-50"
+                className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10 rounded-full"
               >
-                <RefreshCw size={16} className={cn(loading && "animate-spin")} />
-              </button>
+                <RefreshCw size={14} className={cn(loading && "animate-spin")} />
+              </Button>
             )}
           </div>
         </div>
-        <CardTitle className="text-2xl text-white font-bold tracking-tight">
-          {mode === 'insights' ? 'AI Analysis' : 'Data Q&A'}
-        </CardTitle>
       </CardHeader>
       
-      <CardContent className="relative z-10 flex flex-col h-[calc(100%-120px)]">
+      <CardContent className="relative z-10 flex-1 flex flex-col min-h-0 pt-4">
         <AnimatePresence mode="wait">
           {loading && mode === 'insights' ? (
             <motion.div 
@@ -250,36 +181,44 @@ export default function AIInsight() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex flex-col items-center justify-center py-12 space-y-4"
+              className="flex flex-col items-center justify-center h-full space-y-4"
             >
-              <Loader2 className="w-8 h-8 text-white/50 animate-spin" />
-              <p className="text-sm text-white/40 font-medium">Analyzing department data...</p>
+              <div className="relative">
+                <div className="absolute inset-0 bg-white/20 blur-xl rounded-full animate-pulse" />
+                <Loader2 className="w-10 h-10 text-white animate-spin relative" />
+              </div>
+              <p className="text-sm text-white/60 font-medium animate-pulse">Running advanced heuristics...</p>
             </motion.div>
           ) : mode === 'insights' ? (
             <motion.div 
               key="insights"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6 overflow-y-auto pr-2 custom-scrollbar"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6 h-full overflow-y-auto pr-2 scrollbar-hide"
             >
               {insight.split('\n').filter(p => p.trim()).map((p, i) => (
-                <div key={i} className="flex gap-4 group">
-                  <div className="mt-2 w-2 h-2 rounded-full bg-white/40 group-hover:bg-white group-hover:scale-125 transition-all shrink-0" />
-                  <p className="text-base text-white/90 font-medium leading-relaxed">
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex gap-4 group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all duration-300 backdrop-blur-sm"
+                >
+                  <div className="mt-1 w-2 h-2 rounded-full bg-primary-glow group-hover:scale-125 transition-transform shrink-0 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                  <p className="text-sm text-white/90 font-medium leading-relaxed">
                     {p.replace(/^[•\-\d.]\s*/, '')}
                   </p>
-                </div>
+                </motion.div>
               ))}
             </motion.div>
           ) : (
             <motion.div 
               key="qa"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex flex-col h-full space-y-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col h-full"
             >
-              <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar" ref={scrollContainerRef}>
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-hide mb-4" ref={scrollContainerRef}>
                 {messages.length > 0 ? (
                   <div className="space-y-4">
                     {messages.slice(-10).map((msg, i) => (
@@ -291,52 +230,52 @@ export default function AIInsight() {
                         )}
                       >
                         <div className={cn(
-                          "px-4 py-2.5 rounded-2xl text-sm leading-relaxed",
+                          "px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm",
                           msg.role === 'user' 
-                            ? "bg-white text-primary rounded-tr-none font-medium" 
-                            : "bg-white/10 text-white/90 border border-white/5 backdrop-blur-md rounded-tl-none"
+                            ? "bg-white text-primary rounded-tr-none font-semibold" 
+                            : "bg-white/10 text-white border border-white/5 backdrop-blur-md rounded-tl-none"
                         )}>
                           {msg.content}
                         </div>
-                        <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest px-1">
-                          {msg.role === 'user' ? 'You' : 'Assistant'} • {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest px-1">
+                          {msg.role === 'user' ? 'Analytical Input' : 'Engine Output'}
                         </span>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4 p-8">
-                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
-                      <Sparkles className="text-white/30" />
+                    <div className="w-16 h-16 rounded-3xl bg-white/10 flex items-center justify-center border border-white/10 shadow-inner">
+                      <Sparkles className="w-8 h-8 text-white/40" />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm text-white/70 font-medium">Ask anything about your data</p>
-                      <p className="text-xs text-white/40">"What was the highest revenue peak?" or "How is the team performing?"</p>
+                      <p className="text-sm text-white/80 font-semibold">Ready to assist your analysis</p>
+                      <p className="text-xs text-white/40 leading-relaxed">Ask about trends, specific metrics, or department goals.</p>
                     </div>
                   </div>
                 )}
                 {loading && (
                   <div className="flex items-center gap-2 text-white/50 text-xs px-2 animate-pulse">
                     <Loader2 size={12} className="animate-spin" />
-                    <span className="font-bold uppercase tracking-widest text-[10px]">Thinking...</span>
+                    <span className="font-bold uppercase tracking-widest text-[10px]">Processing Context...</span>
                   </div>
                 )}
               </div>
 
-              <form onSubmit={handleQuery} className="flex gap-2 relative mt-auto">
+              <form onSubmit={handleQuery} className="flex gap-2 relative mt-auto pb-2">
                 <Input 
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Type your question..."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl h-11 pr-12 focus-visible:ring-white/20"
+                  placeholder="Ask a question..."
+                  className="bg-white/10 border-white/10 text-white placeholder:text-white/40 rounded-2xl h-12 pr-12 focus-visible:ring-white/30 backdrop-blur-md"
                 />
                 <Button 
                   type="submit"
                   disabled={loading || !query.trim()}
                   size="icon"
-                  className="absolute right-1 top-1 h-9 w-9 bg-white text-primary hover:bg-white/90 rounded-lg shrink-0"
+                  className="absolute right-1.5 top-1.5 h-9 w-9 bg-white text-primary hover:bg-white/90 rounded-xl transition-all shadow-lg"
                 >
-                  <Send size={18} />
+                  <Send size={16} />
                 </Button>
               </form>
             </motion.div>

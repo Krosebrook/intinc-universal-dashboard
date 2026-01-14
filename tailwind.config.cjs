@@ -15,7 +15,8 @@ module.exports = {
   			foreground: 'hsl(var(--foreground))',
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				foreground: 'hsl(var(--primary-foreground))',
+          glow: 'hsl(var(--primary-glow))'
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
@@ -59,6 +60,13 @@ module.exports = {
   				'5': 'hsl(var(--chart-5))'
   			}
   		},
+      boxShadow: {
+        'premium': 'var(--shadow-premium)',
+        'glow': 'var(--shadow-glow)',
+      },
+      backgroundImage: {
+        'gradient-primary': 'var(--gradient-primary)',
+      },
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
