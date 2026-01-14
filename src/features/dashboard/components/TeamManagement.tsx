@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { Separator } from '../../../components/ui/separator';
 import { useRBAC } from '../../../hooks/use-rbac';
-import { Role, ROLE_DEFINITIONS } from '../../types/rbac';
+import { Role, ROLE_DEFINITIONS } from '../../../types/rbac';
 import { toast } from 'sonner';
 import { 
   Users, 

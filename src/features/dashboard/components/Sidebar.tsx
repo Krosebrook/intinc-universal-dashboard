@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDashboard, Department } from '../../../hooks/use-dashboard';
+import { useRBAC } from '../../../hooks/use-rbac';
 import { 
   BarChart3, 
   Users, 
@@ -31,6 +32,7 @@ import { ScrollArea } from '../../../components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../components/ui/tooltip';
 import { toast } from 'sonner';
+import TeamManagement from './TeamManagement';
 
 const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'Sales', icon: BarChart3, label: 'Sales & Revenue' },
@@ -63,9 +65,19 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
     generateMockData, 
     currentView, 
     setCurrentView,
-    setShowOnboarding
+    setShowOnboarding,
+    activeWorkspaceId,
+    setActiveWorkspaceId
   } = useDashboard();
-  const [activeWorkspace, setActiveWorkspace] = useState('Global Operations');
+  const { currentRole, hasPermission, fetchWorkspaceMembers } = useRBAC();
+  const [activeWorkspaceName, setActiveWorkspaceName] = useState('Global Operations');
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (activeWorkspaceId) {
+      fetchWorkspaceMembers(activeWorkspaceId);
+    }
+  }, [activeWorkspaceId]);
 
   return (
     <aside className={cn("w-72 h-screen glass-sidebar flex flex-col p-6 relative z-50", className)}>
@@ -85,7 +97,10 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
             <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
               <div className="flex items-center gap-3 overflow-hidden">
                 <Briefcase size={18} className="text-primary" />
-                <span className="text-sm font-bold truncate">{activeWorkspace}</span>
+                <div className="flex flex-col items-start overflow-hidden">
+                  <span className="text-sm font-bold truncate">{activeWorkspaceName}</span>
+                  <span className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">{currentRole}</span>
+                </div>
               </div>
               <ChevronDown size={14} className="text-muted-foreground group-hover:text-foreground transition-colors" />
             </button>
@@ -93,28 +108,38 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
           <DropdownMenuContent className="w-64 glass-card border-white/10" align="start">
             <DropdownMenuLabel className="text-xs uppercase tracking-widest text-muted-foreground">Workspaces</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer" onClick={() => setActiveWorkspace('Global Operations')}>
+            <DropdownMenuItem className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer" onClick={() => {
+              setActiveWorkspaceName('Global Operations');
+              setActiveWorkspaceId(null);
+            }}>
               <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center text-[10px] font-bold">GO</div>
               Global Operations
             </DropdownMenuItem>
             {workspaces.map(ws => (
-              <DropdownMenuItem key={ws.id} className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer" onClick={() => setActiveWorkspace(ws.name)}>
+              <DropdownMenuItem key={ws.id} className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer" onClick={() => {
+                setActiveWorkspaceName(ws.name);
+                setActiveWorkspaceId(ws.id);
+              }}>
                 <div className="w-6 h-6 rounded bg-white/10 flex items-center justify-center text-[10px] font-bold">
                   {ws.name.substring(0, 2).toUpperCase()}
                 </div>
                 {ws.name}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem 
-              className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer text-primary font-semibold"
-              onClick={() => {
-                const name = prompt('Workspace Name:');
-                if (name) createWorkspace(name);
-              }}
-            >
-              <Plus size={14} /> Create New Workspace
-            </DropdownMenuItem>
+            {hasPermission('workspace:create') && (
+              <>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem 
+                  className="gap-2 focus:bg-primary/10 focus:text-primary cursor-pointer text-primary font-semibold"
+                  onClick={() => {
+                    const name = prompt('Workspace Name:');
+                    if (name) createWorkspace(name);
+                  }}
+                >
+                  <Plus size={14} /> Create New Workspace
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -139,6 +164,7 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
           icon={<Share2 size={20} />} 
           label="Integrations" 
           onClick={onOpenSettings}
+          disabled={!hasPermission('connector:manage')}
         />
       </div>
 
@@ -175,13 +201,19 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => generateMockData(source.id)}
-                    className="w-12 h-12 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-primary/50 transition-all hover:scale-110 active:scale-95"
+                    disabled={!hasPermission('connector:manage')}
+                    className={cn(
+                      "w-12 h-12 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center transition-all active:scale-95",
+                      hasPermission('connector:manage') 
+                        ? "hover:bg-white/10 hover:border-primary/50 hover:scale-110" 
+                        : "opacity-50 cursor-not-allowed"
+                    )}
                   >
                     <source.icon className={cn("w-5 h-5", source.color)} />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="glass-card border-white/10 text-xs font-bold uppercase tracking-widest">
-                  Connect {source.id}
+                  {hasPermission('connector:manage') ? `Connect ${source.id}` : 'Permission Denied'}
                 </TooltipContent>
               </Tooltip>
             ))}
@@ -229,6 +261,13 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
           icon={<Settings size={20} />} 
           label="System Settings" 
           onClick={onOpenSettings}
+          disabled={!hasPermission('settings:view')}
+        />
+        <NavItem 
+          icon={<Users size={20} />} 
+          label="Team Members" 
+          onClick={() => setIsTeamDialogOpen(true)}
+          disabled={!hasPermission('user:manage')}
         />
         <NavItem 
           icon={<HelpCircle size={20} />} 
@@ -239,23 +278,31 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
           }}
         />
       </div>
+
+      <TeamManagement 
+        open={isTeamDialogOpen} 
+        onOpenChange={setIsTeamDialogOpen} 
+        workspaceId={activeWorkspaceId || 'default'} 
+      />
     </aside>
   );
 }
 
-function NavItem({ icon, label, active = false, onClick, id }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void, id?: string }) {
+function NavItem({ icon, label, active = false, onClick, id, disabled }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void, id?: string, disabled?: boolean }) {
   return (
     <button 
       id={id}
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={cn(
         "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group",
-        active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+        active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+        disabled && "opacity-50 cursor-not-allowed hover:bg-transparent"
       )}
     >
       <div className={cn(
         "transition-colors",
-        active ? "text-primary-foreground" : "group-hover:text-primary"
+        active ? "text-primary-foreground" : (disabled ? "" : "group-hover:text-primary")
       )}>
         {icon}
       </div>

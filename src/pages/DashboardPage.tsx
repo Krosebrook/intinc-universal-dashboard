@@ -17,6 +17,7 @@ import { DashboardHeader } from '../features/dashboard/components/DashboardHeade
 import { DashboardDevMode } from '../features/dashboard/components/DashboardDevMode';
 import { DashboardCollaboration } from '../features/collaboration/components/DashboardCollaboration';
 import { DashboardSavedViews } from '../features/dashboard/components/DashboardSavedViews';
+import { OnboardingWizard } from '../features/dashboard/components/OnboardingWizard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { FeatureSpotlight } from '../features/dashboard/components/FeatureSpotlight';
 import { Input } from '../components/ui/input';
@@ -40,7 +41,9 @@ export default function DashboardPage() {
     currentView,
     isWidgetBuilderOpen,
     setIsWidgetBuilderOpen,
-    suggestedStep
+    suggestedStep,
+    showOnboarding,
+    setShowOnboarding
   } = useDashboard();
   
   const [showTemplates, setShowTemplates] = useState(false);
@@ -242,6 +245,16 @@ export default function DashboardPage() {
         open={isWidgetBuilderOpen} 
         onOpenChange={setIsWidgetBuilderOpen} 
         onAdd={(widget) => setWidgets([...widgets, widget])} 
+      />
+
+      <OnboardingWizard 
+        open={showOnboarding} 
+        onOpenChange={setShowOnboarding}
+        onComplete={() => {
+          setShowOnboarding(false);
+          localStorage.setItem('onboarding_completed', 'true');
+          toast.success('Onboarding complete! Enjoy your dashboard.');
+        }}
       />
 
       <SmartAssistant />

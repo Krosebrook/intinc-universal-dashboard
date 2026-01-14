@@ -52,6 +52,8 @@ interface DashboardContextType {
   setShowOnboarding: (open: boolean) => void;
   dashboardState: Record<string, any>;
   setDashboardState: (key: string, value: any) => void;
+  activeWorkspaceId: string | null;
+  setActiveWorkspaceId: (id: string | null) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -66,6 +68,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
   const [suggestedStep, setSuggestedStep] = useState<SuggestedStep | null>(null);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     if (typeof window !== 'undefined') {
       return !localStorage.getItem('onboarding_completed');
@@ -238,7 +241,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     showOnboarding,
     setShowOnboarding,
     dashboardState,
-    setDashboardState
+    setDashboardState,
+    activeWorkspaceId,
+    setActiveWorkspaceId
   };
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

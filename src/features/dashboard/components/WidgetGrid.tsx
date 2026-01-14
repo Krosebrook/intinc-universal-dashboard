@@ -16,6 +16,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useDashboard } from '../../../hooks/use-dashboard';
+import { useRBAC } from '../../../hooks/use-rbac';
 import { WidgetConfig } from '../../../types/dashboard';
 import { WidgetCard } from './WidgetCard';
 import { WidgetDrilldown } from './WidgetDrilldown';
@@ -38,6 +39,7 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
     savedDashboards,
     department
   } = useDashboard();
+  const { hasPermission } = useRBAC();
   
   const [selectedWidget, setSelectedWidget] = useState<WidgetConfig | null>(null);
   const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
@@ -65,6 +67,11 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
   }, [selectedWidget, currentDashboardId, fetchComments]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
+    if (!hasPermission('dashboard:edit')) {
+      toast.error('You do not have permission to rearrange widgets');
+      return;
+    }
+
     const { active, over } = event;
 
     if (over && active.id !== over.id) {

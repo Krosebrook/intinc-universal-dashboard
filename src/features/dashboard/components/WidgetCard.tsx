@@ -38,6 +38,8 @@ import { Input } from '../../../components/ui/input';
 import { WidgetConfig } from '../../../types/dashboard';
 import { WidgetRenderer } from './WidgetRenderer';
 import { useWidgetApi } from '../../../hooks/use-widget-api';
+import { useRBAC } from '../../../hooks/use-rbac';
+import { cn } from '../../../lib/utils';
 
 interface WidgetCardProps {
   widget: WidgetConfig;
@@ -63,6 +65,7 @@ export function WidgetCard({
   onDuplicate,
 }: WidgetCardProps) {
   const { inputs, setInput } = useWidgetApi(widget.id);
+  const { hasPermission } = useRBAC();
   const {
     attributes,
     listeners,
@@ -102,6 +105,10 @@ export function WidgetCard({
   };
 
   const handleDuplicate = () => {
+    if (!hasPermission('widget:create')) {
+      toast.error('Permission denied: widget:create');
+      return;
+    }
     const newWidget = {
       ...widget,
       id: `widget-${Date.now()}`,
@@ -146,9 +153,14 @@ export function WidgetCard({
           <CardHeader className="flex flex-row items-start justify-between pb-2 space-y-0 relative">
             <div className="flex items-center gap-2 flex-1 pr-4">
               <div 
-                {...attributes} 
-                {...listeners} 
-                className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-white/10 rounded-md transition-colors text-muted-foreground/50 hover:text-foreground"
+                {...(hasPermission('dashboard:edit') ? attributes : {})} 
+                {...(hasPermission('dashboard:edit') ? listeners : {})} 
+                className={cn(
+                  "p-1 -ml-1 rounded-md transition-colors text-muted-foreground/50",
+                  hasPermission('dashboard:edit') 
+                    ? "cursor-grab active:cursor-grabbing hover:bg-white/10 hover:text-foreground" 
+                    : "cursor-not-allowed opacity-50"
+                )}
               >
                 <GripVertical size={16} />
               </div>
@@ -181,14 +193,22 @@ export function WidgetCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="glass-card border-white/10" align="end">
-                  <DropdownMenuItem onClick={() => onEdit(widget)} className="gap-2 focus:bg-primary/10 cursor-pointer">
+                  <DropdownMenuItem 
+                    onClick={() => hasPermission('widget:edit') && onEdit(widget)} 
+                    disabled={!hasPermission('widget:edit')}
+                    className="gap-2 focus:bg-primary/10 cursor-pointer disabled:opacity-50"
+                  >
                     <Edit2 size={14} />
-                    Edit Configuration
+                    Edit Configuration {!hasPermission('widget:edit') && '(Admin Only)'}
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem onClick={handleDuplicate} className="gap-2 focus:bg-primary/10 cursor-pointer">
+                  <DropdownMenuItem 
+                    onClick={() => hasPermission('widget:create') && handleDuplicate()} 
+                    disabled={!hasPermission('widget:create')}
+                    className="gap-2 focus:bg-primary/10 cursor-pointer disabled:opacity-50"
+                  >
                     <Copy size={14} />
-                    Duplicate Widget
+                    Duplicate Widget {!hasPermission('widget:create') && '(Admin Only)'}
                   </DropdownMenuItem>
 
                   <DropdownMenuItem onClick={handleExportImage} className="gap-2 focus:bg-primary/10 cursor-pointer">
@@ -197,9 +217,12 @@ export function WidgetCard({
                   </DropdownMenuItem>
                   
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="gap-2 focus:bg-primary/10">
+                    <DropdownMenuSubTrigger 
+                      disabled={!hasPermission('dashboard:edit')}
+                      className="gap-2 focus:bg-primary/10 disabled:opacity-50"
+                    >
                       <Layout size={14} />
-                      Adjust Width
+                      Adjust Width {!hasPermission('dashboard:edit') && '(Admin Only)'}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
                       <DropdownMenuSubContent className="glass-card border-white/10 min-w-[140px]">
@@ -219,9 +242,13 @@ export function WidgetCard({
 
                   <DropdownMenuSeparator className="bg-white/5" />
                   
-                  <DropdownMenuItem onClick={() => onDelete(widget.id)} className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer">
+                  <DropdownMenuItem 
+                    onClick={() => hasPermission('widget:delete') && onDelete(widget.id)} 
+                    disabled={!hasPermission('widget:delete')}
+                    className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer disabled:opacity-50"
+                  >
                     <Trash2 size={14} />
-                    Remove from Dashboard
+                    Remove from Dashboard {!hasPermission('widget:delete') && '(Admin Only)'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
