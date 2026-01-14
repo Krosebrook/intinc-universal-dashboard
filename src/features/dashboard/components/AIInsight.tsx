@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { Activity, Sparkles, Loader2, RefreshCw, MessageSquare, Send, ChevronLeft } from 'lucide-react';
-import { blink } from '../../lib/blink';
-import { useDashboard } from '../../hooks/use-dashboard';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Activity, Sparkles, Loader2, RefreshCw, MessageSquare, Send, User } from 'lucide-react';
+import { blink } from '../../../lib/blink';
+import { useDashboard } from '../../../hooks/use-dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../../lib/utils';
+import { cn } from '../../../lib/utils';
 import type { BlinkUser } from '@blinkdotnew/sdk';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
+import { Input } from '../../../components/ui/input';
+import { Button } from '../../../components/ui/button';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
 
 export default function AIInsight() {
   const { department, widgets } = useDashboard();
@@ -16,8 +22,15 @@ export default function AIInsight() {
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
   const [mode, setMode] = useState<'insights' | 'qa'>('insights');
   const [query, setQuery] = useState('');
-  const [qaResponse, setQaResponse] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
 
   // Track auth state
   useEffect(() => {
@@ -31,31 +44,57 @@ export default function AIInsight() {
     if (e) e.preventDefault();
     if (!query.trim() || loading || !currentUser?.id) return;
 
+    const userMessage: Message = {
+      role: 'user',
+      content: query,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setQuery('');
     setLoading(true);
+
     try {
       const contextData = widgets.map(w => ({
         title: w.title,
         type: w.type,
-        data: w.data.slice(-10) // More data for Q&A
+        data: w.data.slice(-10)
       }));
+
+      // Get last 5 turns for conversation context
+      const historyContext = messages.slice(-10).map(m => 
+        `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
+      ).join('\n');
 
       const { text } = await blink.ai.generateText({
         prompt: `The user has a question about their dashboard data for the ${department} department.
         
-        Question: "${query}"
+        Recent Conversation History:
+        ${historyContext}
+        
+        New Question: "${userMessage.content}"
         
         Dashboard Data Context:
         ${JSON.stringify(contextData, null, 2)}
         
-        Provide a concise, data-driven answer based ONLY on the provided context. If the data doesn't contain the answer, politely say so. Be professional and helpful.`,
+        Provide a concise, data-driven answer based ONLY on the provided context and history. If the data doesn't contain the answer, politely say so. Be professional and helpful.`,
         system: "You are a Senior Business Intelligence Analyst at Intinc. Answer user questions about dashboard data accurately and concisely.",
       });
 
-      setQaResponse(text);
-      setQuery('');
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: text,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('QA Error:', error);
-      setQaResponse("I encountered an error analyzing your question. Please try again.");
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I encountered an error analyzing your question. Please try again.",
+        timestamp: new Date()
+      }]);
     } finally {
       setLoading(false);
     }
@@ -64,7 +103,6 @@ export default function AIInsight() {
   const fetchInsight = async (retryCount = 0) => {
     const MAX_RETRIES = 2;
     
-    // AI API requires authentication - skip if not logged in
     if (!currentUser?.id) {
       setInsight('Sign in to unlock AI-powered insights for your dashboard data.');
       return;
@@ -72,11 +110,10 @@ export default function AIInsight() {
 
     setLoading(true);
     try {
-      // Create a simplified version of the data for the AI
       const contextData = widgets.map(w => ({
         title: w.title,
         type: w.type,
-        summary: w.data.slice(-3) // last 3 data points
+        summary: w.data.slice(-3)
       }));
 
       const { text } = await blink.ai.generateText({
@@ -91,31 +128,26 @@ export default function AIInsight() {
       });
       setInsight(text);
     } catch (error: any) {
-      // Handle network errors gracefully with retry
       const isNetworkError = error?.code === 'NETWORK_ERROR' || 
                              error?.code === 'AI_ERROR' ||
                              error?.message?.includes('Failed to fetch') ||
                              error?.message?.includes('Network request failed');
       
       if (isNetworkError && retryCount < MAX_RETRIES) {
-        // Retry after a short delay
         setTimeout(() => fetchInsight(retryCount + 1), 2000);
         return;
       }
       
-      // Only log unexpected errors (not network transient failures)
       if (!isNetworkError) {
         console.warn('AI Insight warning:', error?.message || error);
       }
       
-      // Show fallback insight based on current department data
       setInsight(generateFallbackInsight());
     } finally {
       setLoading(false);
     }
   };
 
-  // Generate static fallback insights when AI is unavailable
   const generateFallbackInsight = () => {
     const insights: Record<string, string> = {
       Sales: `• Revenue is showing positive momentum with strong Enterprise segment growth\n• Active orders are up, indicating healthy pipeline activity\n• Focus on improving conversion rates to maximize lead efficiency`,
@@ -131,13 +163,12 @@ export default function AIInsight() {
   };
 
   useEffect(() => {
-    // Only fetch insights when authenticated and widgets are available
     if (currentUser?.id && widgets.length > 0) {
       fetchInsight();
     } else if (!currentUser?.id) {
       setInsight('Sign in to unlock AI-powered insights for your dashboard data.');
     }
-  }, [department, widgets, currentUser?.id]); // Re-fetch when auth state or data changes
+  }, [department, widgets, currentUser?.id]);
 
   return (
     <Card className="bg-primary border-none shadow-2xl shadow-primary/20 relative overflow-hidden h-full min-h-[350px]">
@@ -163,7 +194,6 @@ export default function AIInsight() {
             <button 
               onClick={() => {
                 setMode(mode === 'insights' ? 'qa' : 'insights');
-                setQaResponse(null);
               }}
               className="text-xs font-bold uppercase tracking-widest text-primary-foreground/50 hover:text-primary-foreground transition-colors px-3 py-1 rounded-full border border-white/10"
             >
@@ -223,11 +253,29 @@ export default function AIInsight() {
               className="flex flex-col h-full space-y-4"
             >
               <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar" ref={scrollContainerRef}>
-                {qaResponse ? (
-                  <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-md border border-white/5">
-                    <p className="text-sm text-white/90 leading-relaxed italic">
-                      {qaResponse}
-                    </p>
+                {messages.length > 0 ? (
+                  <div className="space-y-4">
+                    {messages.slice(-10).map((msg, i) => (
+                      <div 
+                        key={i} 
+                        className={cn(
+                          "flex flex-col gap-1.5 max-w-[85%]",
+                          msg.role === 'user' ? "ml-auto items-end" : "items-start"
+                        )}
+                      >
+                        <div className={cn(
+                          "px-4 py-2.5 rounded-2xl text-sm leading-relaxed",
+                          msg.role === 'user' 
+                            ? "bg-white text-primary rounded-tr-none font-medium" 
+                            : "bg-white/10 text-white/90 border border-white/5 backdrop-blur-md rounded-tl-none"
+                        )}>
+                          {msg.content}
+                        </div>
+                        <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest px-1">
+                          {msg.role === 'user' ? 'You' : 'Assistant'} • {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4 p-8">
@@ -241,9 +289,9 @@ export default function AIInsight() {
                   </div>
                 )}
                 {loading && (
-                  <div className="flex items-center gap-2 text-white/50 text-xs px-2">
+                  <div className="flex items-center gap-2 text-white/50 text-xs px-2 animate-pulse">
                     <Loader2 size={12} className="animate-spin" />
-                    <span>Thinking...</span>
+                    <span className="font-bold uppercase tracking-widest text-[10px]">Thinking...</span>
                   </div>
                 )}
               </div>
