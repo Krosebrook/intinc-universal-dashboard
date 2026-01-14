@@ -3,7 +3,7 @@ import { LogOut, Bell, User, Search, FileText } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { blink } from '../../../lib/blink';
-import { exportToPdf } from '../../../lib/export';
+import { useExport } from '../../../hooks/use-export';
 import { toast } from 'sonner';
 
 interface DashboardNavbarProps {
@@ -11,15 +11,10 @@ interface DashboardNavbarProps {
 }
 
 export function DashboardNavbar({ department }: DashboardNavbarProps) {
+  const { isExporting, performExport } = useExport();
+
   const handleExportPDF = async () => {
-    const toastId = toast.loading('Generating high-fidelity PDF...');
-    try {
-      await exportToPdf('dashboard-content', `Intinc-${department}-Dashboard.pdf`);
-      toast.success('Dashboard exported successfully', { id: toastId });
-    } catch (error) {
-      console.error('Export Error:', error);
-      toast.error('Failed to export dashboard', { id: toastId });
-    }
+    await performExport('dashboard-content', department);
   };
 
   return (
@@ -47,10 +42,11 @@ export function DashboardNavbar({ department }: DashboardNavbarProps) {
             variant="ghost" 
             size="sm" 
             onClick={handleExportPDF}
+            disabled={isExporting}
             className="hidden lg:flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-xl px-3"
           >
             <FileText size={16} />
-            <span>Export PDF</span>
+            <span>{isExporting ? 'Exporting...' : 'Export PDF'}</span>
           </Button>
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-xl">
             <Bell size={20} />

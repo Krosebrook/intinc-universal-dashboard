@@ -8,9 +8,8 @@ import TemplateGallery from '../components/dashboard/TemplateGallery';
 import VisualWidgetBuilder from '../components/dashboard/VisualWidgetBuilder';
 import UniversalIngestor from '../components/dashboard/UniversalIngestor';
 import { useDashboard } from '../hooks/use-dashboard';
+import { useExport } from '../hooks/use-export';
 import { motion } from 'framer-motion';
-import { toast } from 'react-hot-toast';
-import { exportToPdf } from '../lib/export';
 import { DashboardHeader } from '../features/dashboard/components/DashboardHeader';
 import { DashboardDevMode } from '../features/dashboard/components/DashboardDevMode';
 import { DashboardCollaboration } from '../features/collaboration/components/DashboardCollaboration';
@@ -42,7 +41,7 @@ export default function DashboardPage() {
   const [showAddWidgetDialog, setShowAddWidgetDialog] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [dashboardName, setDashboardName] = useState('');
-  const [isExporting, setIsExporting] = useState(false);
+  const { isExporting, performExport } = useExport();
   const [commentInput, setCommentInput] = useState('');
   const [isDevMode, setIsDevMode] = useState(false);
   const [jsonConfig, setJsonConfig] = useState('');
@@ -76,10 +75,8 @@ export default function DashboardPage() {
   }, [jsonConfig, setWidgets]);
 
   const handleExport = useCallback(async () => {
-    setIsExporting(true);
-    await exportToPdf('dashboard-content', `${department}-dashboard-${Date.now()}.pdf`);
-    setIsExporting(false);
-  }, [department]);
+    await performExport('dashboard-content', department);
+  }, [department, performExport]);
 
   const handleSave = useCallback(async () => {
     if (!dashboardName.trim()) return;
@@ -102,7 +99,7 @@ export default function DashboardPage() {
 
   return (
     <Shell>
-      <div className="space-y-8 pb-12" id="dashboard-content">
+      <div className="space-y-8 pb-12">
         <DashboardHeader 
           department={department}
           currentView={currentView}
