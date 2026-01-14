@@ -6,11 +6,34 @@ import { DashboardNavbar } from '../../features/dashboard/components/DashboardNa
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 import { Button } from '../ui/button';
+import { OnboardingWizard } from '../../features/dashboard/components/OnboardingWizard';
+import { blink } from '../../lib/blink';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
-  const { department } = useDashboard();
+  const { department, logAction, showOnboarding, setShowOnboarding } = useDashboard();
   const [showSettings, setShowSettings] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  const handleOnboardingComplete = async () => {
+    setShowOnboarding(false);
+    localStorage.setItem('onboarding_completed', 'true');
+    
+    try {
+      const user = await blink.auth.me();
+      if (user) {
+        const metadata = user.metadata ? JSON.parse(user.metadata) : {};
+        await blink.auth.updateMe({
+          metadata: {
+            ...metadata,
+            onboarding_completed: true
+          }
+        });
+        logAction('onboarding_complete', 'user');
+      }
+    } catch (error) {
+      console.error('Failed to update onboarding metadata:', error);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden font-sans selection:bg-primary/30 selection:text-primary-foreground">
@@ -50,6 +73,12 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       </Sheet>
 
       <EnterpriseSettings open={showSettings} onOpenChange={setShowSettings} />
+
+      <OnboardingWizard 
+        open={showOnboarding} 
+        onOpenChange={setShowOnboarding}
+        onComplete={handleOnboardingComplete}
+      />
     </div>
   );
 }

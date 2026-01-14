@@ -30,6 +30,7 @@ import { cn } from '../../../lib/utils';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../components/ui/tooltip';
+import { toast } from 'sonner';
 
 const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'Sales', icon: BarChart3, label: 'Sales & Revenue' },
@@ -51,7 +52,19 @@ const mockSources = [
 ] as const;
 
 export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?: () => void, className?: string }) {
-  const { department, setDepartment, savedDashboards, loadDashboard, deleteDashboard, workspaces, createWorkspace, generateMockData, currentView, setCurrentView } = useDashboard();
+  const { 
+    department, 
+    setDepartment, 
+    savedDashboards, 
+    loadDashboard, 
+    deleteDashboard, 
+    workspaces, 
+    createWorkspace, 
+    generateMockData, 
+    currentView, 
+    setCurrentView,
+    setShowOnboarding
+  } = useDashboard();
   const [activeWorkspace, setActiveWorkspace] = useState('Global Operations');
 
   return (
@@ -215,7 +228,14 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
           label="System Settings" 
           onClick={onOpenSettings}
         />
-        <NavItem icon={<HelpCircle size={20} />} label="Support Center" />
+        <NavItem 
+          icon={<HelpCircle size={20} />} 
+          label="Restart Tutorial" 
+          onClick={() => {
+            setShowOnboarding(true);
+            toast.info('Restarting the onboarding tutorial...');
+          }}
+        />
       </div>
     </aside>
   );

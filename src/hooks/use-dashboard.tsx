@@ -227,6 +227,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     suggestedStep,
     isWidgetBuilderOpen,
     setIsWidgetBuilderOpen,
+    showOnboarding,
+    setShowOnboarding,
     dashboardState,
     setDashboardState
   };
