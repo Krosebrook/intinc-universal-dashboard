@@ -3,7 +3,7 @@ import Sidebar from '../../features/dashboard/components/Sidebar';
 import EnterpriseSettings from '../../features/dashboard/components/EnterpriseSettings';
 import { useDashboard } from '../../hooks/use-dashboard';
 import { DashboardNavbar } from '../../features/dashboard/components/DashboardNavbar';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -40,6 +40,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       {/* Mobile Sidebar */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent side="left" className="p-0 w-72 border-r border-white/5 bg-background">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+          <SheetDescription className="sr-only">Main navigation sidebar</SheetDescription>
           <Sidebar onOpenSettings={() => {
             setShowSettings(true);
             setIsMobileMenuOpen(false);
