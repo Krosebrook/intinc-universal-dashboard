@@ -17,23 +17,13 @@ interface Template {
   department: Department;
 }
 
-const baseTemplates: Template[] = [
-  { id: 'sales-exec', name: 'Sales Executive', description: 'High-level revenue and conversion overview.', icon: TrendingUp, department: 'Sales' },
-  { id: 'hr-retention', name: 'Retention Analysis', description: 'Deep dive into employee churn and happiness.', icon: Users, department: 'HR' },
-  { id: 'it-sec', name: 'Security Posture', description: 'Monitoring threats and system vulnerabilities.', icon: Shield, department: 'IT' },
-  { id: 'mkt-roi', name: 'Marketing ROI', description: 'Analyze spend across all digital channels.', icon: Sparkles, department: 'Marketing' },
-];
-
-const templates: Template[] = [
-  ...baseTemplates,
-  ...EXPANDED_TEMPLATES.map(t => ({
-    id: t.id,
-    name: t.name,
-    description: t.description,
-    icon: t.icon,
-    department: t.department
-  }))
-];
+const templates: Template[] = EXPANDED_TEMPLATES.map(t => ({
+  id: t.id,
+  name: t.name,
+  description: t.description,
+  icon: t.icon,
+  department: t.department
+}));
 
 interface TemplateGalleryProps {
   open: boolean;

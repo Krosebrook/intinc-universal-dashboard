@@ -55,9 +55,9 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [department, setDepartment] = useState<Department>('Sales');
-  const [widgets, setWidgets] = useState<WidgetConfig[]>(DEPT_DATA['Sales'].widgets);
-  const [kpis, setKpis] = useState<KPIData[]>(DEPT_DATA['Sales'].kpis);
-  const [currentView, setCurrentView] = useState<'overview' | 'explorer'>('overview');
+  const [widgets, setWidgets] = useState<WidgetConfig[]>([]);
+  const [kpis, setKpis] = useState<KPIData[]>([]);
+  const [currentView, setCurrentView] = useState<'overview' | 'explorer'>('explorer'); // Start in explorer (upload) mode
   const [globalFilters, setGlobalFilters] = useState<Record<string, any>>({});
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
@@ -69,6 +69,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     });
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    // Start empty, let user upload or select template
+    if (widgets.length === 0 && kpis.length === 0) {
+      setCurrentView('explorer');
+    }
+  }, [department, widgets.length, kpis.length]);
 
   useEffect(() => {
     // Logic to re-evaluate user progress
@@ -141,6 +148,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         const config = JSON.parse(dashboard.config);
         setWidgets(config.widgets);
         setDepartment(dashboard.department as Department);
+        setCurrentView('overview');
         toast.success(`Loaded dashboard: ${dashboard.name}`);
         fetchComments(id);
       }
