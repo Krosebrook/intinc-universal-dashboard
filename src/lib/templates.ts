@@ -13,7 +13,8 @@ import {
   Lock,
   Search,
   FileText,
-  Cpu
+  Cpu,
+  Target
 } from 'lucide-react';
 import { Department } from '../hooks/use-dashboard';
 import { KPIData } from '../components/dashboard/KPISection';
