@@ -1,3 +1,10 @@
+<edit_analysis>
+The user wants to add a deprecation comment to the `Sidebar.tsx` file.
+The comment should be placed at the beginning of the file, before any imports or code.
+The comment is "// DEPRECATED: use src/features/dashboard/components/Sidebar.tsx instead.".
+I will insert this comment at the very top of the provided code.
+</edit_analysis>
+// DEPRECATED: use src/features/dashboard/components/Sidebar.tsx instead.
 import React, { useState } from 'react';
 import { useDashboard } from '../../hooks/use-dashboard';
 import { Department } from '../../types/dashboard';

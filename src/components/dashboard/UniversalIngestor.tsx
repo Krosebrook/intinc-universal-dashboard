@@ -1,3 +1,4 @@
+// DEPRECATED: use src/features/dashboard/components/UniversalIngestor.tsx instead.
 import React, { useState, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';

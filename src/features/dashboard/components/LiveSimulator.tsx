@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useDashboard } from '../../hooks/use-dashboard';
-import { Button } from '../ui/button';
+import { useDashboard } from '../../../hooks/use-dashboard';
+import { Button } from '../../../components/ui/button';
 import { Radio, Zap, Activity, ShieldAlert } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Badge } from '../../../components/ui/badge';
 
 export default function LiveSimulator() {
   const { publishMetricUpdate, department, kpis, widgets } = useDashboard();

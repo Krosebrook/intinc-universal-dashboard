@@ -1,11 +1,10 @@
 import { useState, createContext, useContext, useEffect, useCallback } from 'react';
-import { DollarSign, Users, Zap, Target, Clock } from 'lucide-react';
 import { blink } from '../lib/blink';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import type { BlinkUser } from '@blinkdotnew/sdk';
 import { EXPANDED_TEMPLATES } from '../lib/templates';
-import { Department, KPIData, Workspace, Comment, SavedDashboard } from '../types/dashboard';
-import { WidgetConfig } from '../components/dashboard/WidgetGrid';
+import { Department, KPIData, Workspace, Comment, SavedDashboard, WidgetConfig } from '../types/dashboard';
+import { logAuditEvent } from '../lib/security/audit';
 import { DEPT_DATA } from '../lib/dashboard-data';
 import { getMockData } from '../lib/mock-data';
 import { useDashboardsCRUD } from './use-dashboards-crud';

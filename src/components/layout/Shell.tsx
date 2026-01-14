@@ -1,6 +1,6 @@
 import React from 'react';
-import Sidebar from '../dashboard/Sidebar';
-import EnterpriseSettings from '../dashboard/EnterpriseSettings';
+import Sidebar from '../../features/dashboard/components/Sidebar';
+import EnterpriseSettings from '../../features/dashboard/components/EnterpriseSettings';
 import { useDashboard } from '../../hooks/use-dashboard';
 import { DashboardNavbar } from '../../features/dashboard/components/DashboardNavbar';
 

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
 import { Layout, Check, Sparkles, TrendingUp, Users, Shield, Search, Loader2, DollarSign, Cpu, Activity, Brain, Heart, Lock, BarChart3 } from 'lucide-react';
-import { useDashboard, Department } from '../../hooks/use-dashboard';
+import { useDashboard, Department } from '../../../hooks/use-dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { blink } from '../../lib/blink';
-import { EXPANDED_TEMPLATES } from '../../lib/templates';
+import { blink } from '../../../lib/blink';
+import { EXPANDED_TEMPLATES } from '../../../lib/templates';
 
 interface Template {
   id: string;

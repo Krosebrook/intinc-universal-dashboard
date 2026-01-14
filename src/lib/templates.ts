@@ -17,8 +17,7 @@ import {
   Target
 } from 'lucide-react';
 import { Department } from '../hooks/use-dashboard';
-import { KPIData } from '../components/dashboard/KPISection';
-import { WidgetConfig } from '../components/dashboard/WidgetGrid';
+import { KPIData, WidgetConfig } from '../types/dashboard';
 
 export interface TemplateDefinition {
   id: string;

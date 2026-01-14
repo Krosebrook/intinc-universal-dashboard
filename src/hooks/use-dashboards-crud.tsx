@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { blink } from '../lib/blink';
-import { toast } from 'react-hot-toast';
-import { SavedDashboard, Department } from '../types/dashboard';
-import { WidgetConfig } from '../components/dashboard/WidgetGrid';
+import { toast } from 'sonner';
+import { SavedDashboard, Department, WidgetConfig } from '../types/dashboard';
 import { BlinkUser } from '@blinkdotnew/sdk';
 import { logAuditEvent, AuditActions, AuditEntities } from '../lib/security/audit';
 import { sanitizeText } from '../lib/security/sanitize';

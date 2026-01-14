@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDashboard, Department } from '../../hooks/use-dashboard';
+import { useDashboard, Department } from '../../../hooks/use-dashboard';
 import { 
   BarChart3, 
   Users, 
@@ -26,10 +26,10 @@ import {
   Shield,
   Heart
 } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { ScrollArea } from '../ui/scroll-area';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { cn } from '../../../lib/utils';
+import { ScrollArea } from '../../../components/ui/scroll-area';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../components/ui/tooltip';
 
 const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'Sales', icon: BarChart3, label: 'Sales & Revenue' },

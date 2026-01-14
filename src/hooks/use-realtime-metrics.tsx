@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import { blink } from '../lib/blink';
-import { toast } from 'react-hot-toast';
-import { Department, KPIData } from '../types/dashboard';
-import { WidgetConfig } from '../components/dashboard/WidgetGrid';
+import { toast } from 'sonner';
+import { Department, KPIData, WidgetConfig } from '../types/dashboard';
 import { BlinkUser } from '@blinkdotnew/sdk';
 
 export function useRealtimeMetrics(

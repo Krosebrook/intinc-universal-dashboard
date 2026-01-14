@@ -1,3 +1,4 @@
+// DEPRECATED: use src/features/dashboard/components/TemplateGallery.tsx instead.
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';

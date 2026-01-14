@@ -1,3 +1,4 @@
+// DEPRECATED: use src/features/dashboard/components/LiveSimulator.tsx instead.
 import React, { useState, useEffect } from 'react';
 import { useDashboard } from '../../hooks/use-dashboard';
 import { Button } from '../ui/button';

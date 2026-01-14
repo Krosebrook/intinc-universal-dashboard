@@ -4,24 +4,24 @@
  */
 
 import React, { useState } from 'react';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Calendar } from '../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Separator } from '../ui/separator';
-import { ScrollArea } from '../ui/scroll-area';
-import { Switch } from '../ui/switch';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { Calendar } from '../../../components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';
+import { Separator } from '../../../components/ui/separator';
+import { ScrollArea } from '../../../components/ui/scroll-area';
+import { Switch } from '../../../components/ui/switch';
 import { 
   Filter, X, Calendar as CalendarIcon, 
   GitCompare, ChevronDown, Trash2, SlidersHorizontal,
   RefreshCw
 } from 'lucide-react';
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { useWidgetState } from '../../hooks/use-widget-state';
+import { useWidgetState } from '../../../hooks/use-widget-state';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../../lib/utils';
+import { cn } from '../../../lib/utils';
 
 interface GlobalFiltersProps {
   className?: string;

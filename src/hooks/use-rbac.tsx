@@ -7,7 +7,7 @@ import { useState, useEffect, createContext, useContext, useCallback } from 'rea
 import { blink } from '../lib/blink';
 import type { BlinkUser } from '@blinkdotnew/sdk';
 import { Permission, Role, ROLE_DEFINITIONS, WorkspaceMember } from '../types/rbac';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface RBACContextType {
   currentRole: Role;

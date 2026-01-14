@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { toast } from 'react-hot-toast';
-import { useDashboard } from '../../hooks/use-dashboard';
-import { WidgetConfig } from '../../types/dashboard';
-import { WidgetCard } from '../../features/dashboard/components/WidgetCard';
-import { WidgetDrilldown } from '../../features/dashboard/components/WidgetDrilldown';
-import { WidgetEditDialog } from '../../features/dashboard/components/WidgetEditDialog';
-import { ActiveFilters } from '../../features/dashboard/components/ActiveFilters';
+import { toast } from 'sonner';
+import { useDashboard } from '../../../hooks/use-dashboard';
+import { WidgetConfig } from '../../../types/dashboard';
+import { WidgetCard } from './WidgetCard';
+import { WidgetDrilldown } from './WidgetDrilldown';
+import { WidgetEditDialog } from './WidgetEditDialog';
+import { ActiveFilters } from './ActiveFilters';
 
 interface WidgetGridProps {
   widgets: WidgetConfig[];

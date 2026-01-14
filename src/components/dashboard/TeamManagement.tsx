@@ -3,6 +3,7 @@
  * Full team management with invite, role assignment, and member management
  */
 
+// DEPRECATED: use src/features/dashboard/components/TeamManagement.tsx instead.
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';

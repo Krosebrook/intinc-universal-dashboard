@@ -1,6 +1,6 @@
+// DEPRECATED: use src/features/dashboard/components/WidgetGrid.tsx instead.
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useDashboard } from '../../hooks/use-dashboard';
 import { WidgetConfig } from '../../types/dashboard';
 import { WidgetCard } from '../../features/dashboard/components/WidgetCard';

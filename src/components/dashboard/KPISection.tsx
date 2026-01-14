@@ -1,3 +1,4 @@
+// DEPRECATED: use src/features/dashboard/components/KPISection.tsx instead.
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
@@ -41,8 +42,8 @@ export default function KPISection({ data }: KPISectionProps) {
               <div className="flex items-center gap-1.5">
                 <div className={cn(
                   "flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-md",
-                  item.trendType === 'up' 
-                    ? "bg-emerald-500/10 text-emerald-500" 
+                  item.trendType === 'up'
+                    ? "bg-emerald-500/10 text-emerald-500"
                     : "bg-rose-500/10 text-rose-500"
                 )}>
                   {item.trendType === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}

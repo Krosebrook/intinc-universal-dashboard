@@ -1,5 +1,4 @@
 import { LucideIcon } from 'lucide-react';
-import { WidgetConfig } from '../components/dashboard/WidgetGrid';
 
 export type Department = 'Sales' | 'HR' | 'IT' | 'Marketing' | 'SaaS' | 'Product' | 'AI' | 'Operations';
 

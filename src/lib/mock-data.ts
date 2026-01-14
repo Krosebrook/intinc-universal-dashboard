@@ -1,6 +1,5 @@
 import { DollarSign, Users, Zap, Target, Clock, Shield, Cpu, Globe } from 'lucide-react';
-import { KPIData } from '../types/dashboard';
-import { WidgetConfig } from '../components/dashboard/WidgetGrid';
+import { KPIData, WidgetConfig } from '../types/dashboard';
 import { EXPANDED_TEMPLATES } from './templates';
 
 export function getMockData(source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub' | 'OpenAI'): { kpis: KPIData[], widgets: WidgetConfig[] } {

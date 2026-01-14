@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { blink } from '../lib/blink';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Workspace } from '../types/dashboard';
 import { BlinkUser } from '@blinkdotnew/sdk';
 

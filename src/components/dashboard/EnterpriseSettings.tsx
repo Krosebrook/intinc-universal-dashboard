@@ -1,3 +1,4 @@
+// DEPRECATED: use src/features/dashboard/components/EnterpriseSettings.tsx instead.
 /**
  * Enterprise Settings Component
  * Full enterprise settings functionality with branding, API keys, webhooks, and team management

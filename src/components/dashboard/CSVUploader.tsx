@@ -1,3 +1,4 @@
+// DEPRECATED: use src/features/dashboard/components/CSVUploader.tsx instead.
 import React, { useState, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
@@ -6,7 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { FileUp, Table, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { useDashboard } from '../../hooks/use-dashboard';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CSVUploader() {

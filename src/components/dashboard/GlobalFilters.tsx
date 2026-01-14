@@ -1,3 +1,4 @@
+// DEPRECATED: use src/features/dashboard/components/GlobalFilters.tsx instead.
 /**
  * Global Filters Component
  * Phase 6.2: Advanced Interactivity - Dashboard-wide filtering controls

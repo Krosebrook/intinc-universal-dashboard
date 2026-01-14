@@ -43,7 +43,8 @@ export function useWidgetApi(widgetId: string) {
     
     // Collaboration
     postInsight: (content: string) => {
-      addComment('current', content, widgetId);
+      const currentDashboardId = savedDashboards.find(d => d.department === department)?.id || 'default';
+      addComment(currentDashboardId, content, widgetId);
     },
 
     // Utilities

@@ -1,10 +1,9 @@
-// DEPRECATED: use src/features/dashboard/components/SmartAssistant.tsx instead.
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, X } from 'lucide-react';
-import { useDashboard } from '../../hooks/use-dashboard';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
+import { useDashboard } from '../../../hooks/use-dashboard';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 export function SmartAssistant() {
   const { suggestedStep } = useDashboard();

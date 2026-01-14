@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { blink } from '../lib/blink';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Comment } from '../types/dashboard';
 
 export function useComments() {

@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { Button } from '../ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
+import { Button } from '../../../components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
 import { FileUp, Table, Check, Loader2, Sparkles, FileText, FileSpreadsheet, LayoutGrid, BarChart3, PieChart, Info } from 'lucide-react';
-import { useDashboard } from '../../hooks/use-dashboard';
+import { useDashboard } from '../../../hooks/use-dashboard';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { blink } from '../../lib/blink';
-import { Badge } from '../ui/badge';
+import { blink } from '../../../lib/blink';
+import { Badge } from '../../../components/ui/badge';
 
 interface RecommendedDashboard {
   id: string;

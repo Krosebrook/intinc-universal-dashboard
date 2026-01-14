@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { Button } from '../ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Button } from '../../../components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { FileUp, Table, Check, AlertCircle, Loader2 } from 'lucide-react';
-import { useDashboard } from '../../hooks/use-dashboard';
-import { toast } from 'react-hot-toast';
+import { useDashboard } from '../../../hooks/use-dashboard';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CSVUploader() {
