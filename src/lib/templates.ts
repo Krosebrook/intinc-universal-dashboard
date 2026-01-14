@@ -12,7 +12,8 @@ import {
   MousePointer2,
   Lock,
   Search,
-  FileText
+  FileText,
+  Cpu
 } from 'lucide-react';
 import { Department } from '../hooks/use-dashboard';
 import { KPIData } from '../components/dashboard/KPISection';
