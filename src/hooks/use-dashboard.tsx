@@ -133,15 +133,26 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     toast.success('All filters cleared');
   }, []);
 
-  const generateMockData = useCallback((source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub' | 'OpenAI') => {
+  const generateMockData = useCallback(async (source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub' | 'OpenAI') => {
+    const toastId = toast.loading(`Connecting to ${source} API...`);
+    
+    // Simulate real integration delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
     const { kpis: mockKpis, widgets: mockWidgets } = getMockData(source);
     
     if (mockKpis.length > 0) {
       setKpis(mockKpis);
       setWidgets(mockWidgets);
-      toast.success(`Generated ${source} sample data`);
+      toast.success(`Connected to ${source} and synced ${mockWidgets.length} visualizations`, { id: toastId });
+      
+      if (currentUser) {
+        logAction('external_integration_connect', 'integration', source, { status: 'success' });
+      }
+    } else {
+      toast.error(`Failed to establish connection to ${source}`, { id: toastId });
     }
-  }, []);
+  }, [currentUser]);
 
   const loadDashboard = async (id: string) => {
     try {

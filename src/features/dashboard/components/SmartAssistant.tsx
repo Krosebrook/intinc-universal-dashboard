@@ -27,55 +27,89 @@ export function SmartAssistant() {
     if (!prompt.trim() || isGenerating) return;
 
     setIsGenerating(true);
+    const toastId = toast.loading('Consulting AI Analyst...');
     try {
+      const user = await blink.auth.me();
+      
       const { object } = await blink.ai.generateObject({
-        prompt: `Generate a dashboard widget configuration for a ${department} dashboard. 
+        prompt: `You are an expert dashboard architect for a ${department} department.
                 User request: "${prompt}"
-                Current KPIs in dashboard: ${kpis.map(k => k.title).join(', ')}
-                Requirement: Provide realistic mock data that fits the department.
-                Return exactly one WidgetConfig object.`,
+                Current widgets: ${JSON.stringify(widgets.map(w => ({ id: w.id, title: w.title, type: w.type })))}
+                Current KPIs: ${kpis.map(k => k.title).join(', ')}
+
+                Actions you can take:
+                1. 'create': Add a new widget based on the request.
+                2. 'modify': Update an existing widget's configuration.
+                3. 'delete': Remove a widget that is no longer relevant.
+                4. 'summarize': Provide a text-based analysis of the request without changing the dashboard.
+
+                Return a JSON object with:
+                - action: 'create' | 'modify' | 'delete' | 'summarize'
+                - widgetId: string (required for modify/delete)
+                - config: WidgetConfig (required for create/modify)
+                - summary: string (required for summarize or to explain the change)`,
         schema: {
           type: 'object',
           properties: {
-            type: { 
-              type: 'string', 
-              enum: ['area', 'bar', 'pie', 'line', 'stacked-bar', 'multi-line', 'gauge', 'progress', 'scatter'] 
+            action: { type: 'string', enum: ['create', 'modify', 'delete', 'summarize'] },
+            widgetId: { type: 'string' },
+            config: {
+              type: 'object',
+              properties: {
+                type: { type: 'string', enum: ['area', 'bar', 'pie', 'line', 'stacked-bar', 'multi-line', 'gauge', 'progress', 'scatter'] },
+                title: { type: 'string' },
+                description: { type: 'string' },
+                data: { type: 'array', items: { type: 'object', additionalProperties: true } },
+                dataKey: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
+                categoryKey: { type: 'string' },
+                gridSpan: { type: 'number', minimum: 1, maximum: 12 },
+                colors: { type: 'array', items: { type: 'string' } },
+                stack: { type: 'boolean' },
+                goal: { type: 'number' },
+                forecast: { type: 'boolean' }
+              }
             },
-            title: { type: 'string' },
-            description: { type: 'string' },
-            data: { 
-              type: 'array',
-              items: { type: 'object', additionalProperties: true }
-            },
-            dataKey: { 
-              oneOf: [
-                { type: 'string' },
-                { type: 'array', items: { type: 'string' } }
-              ]
-            },
-            categoryKey: { type: 'string' },
-            gridSpan: { type: 'number', minimum: 1, maximum: 12 },
-            colors: { type: 'array', items: { type: 'string' } },
-            stack: { type: 'boolean' },
-            goal: { type: 'number' },
-            forecast: { type: 'boolean' }
+            summary: { type: 'string' }
           },
-          required: ['type', 'title', 'description', 'data', 'dataKey', 'categoryKey']
+          required: ['action', 'summary']
         }
       });
 
-      const newWidget = {
-        ...(object as WidgetConfig),
-        id: `ai-widget-${Date.now()}`
-      };
+      const response = object as any;
 
-      setWidgets(prev => [...prev, newWidget]);
+      switch (response.action) {
+        case 'create':
+          const newWidget = { ...response.config, id: `ai-widget-${Date.now()}` };
+          setWidgets(prev => [newWidget, ...prev]);
+          toast.success(`Generated: ${newWidget.title}`, { id: toastId });
+          break;
+        case 'modify':
+          setWidgets(prev => prev.map(w => w.id === response.widgetId ? { ...w, ...response.config } : w));
+          toast.success(`Updated: ${response.config.title || response.widgetId}`, { id: toastId });
+          break;
+        case 'delete':
+          setWidgets(prev => prev.filter(w => w.id !== response.widgetId));
+          toast.success(`Removed widget`, { id: toastId });
+          break;
+        case 'summarize':
+          toast.info(response.summary, { id: toastId, duration: 5000 });
+          break;
+      }
+      
+      if (user) {
+        await blink.db.auditLogs.create({
+          user_id: user.id,
+          action: `ai.${response.action}_widget`,
+          entity: 'dashboard',
+          metadata: JSON.stringify({ prompt, action: response.action, department })
+        });
+      }
+
       setPrompt('');
       setIsExpanded(false);
-      toast.success(`Generated "${newWidget.title}" widget`);
     } catch (error) {
-      console.error('AI Generation error:', error);
-      toast.error('Failed to generate widget. Please try a clearer request.');
+      console.error('AI Assistant error:', error);
+      toast.error('AI assistant had trouble with that request.', { id: toastId });
     } finally {
       setIsGenerating(false);
     }

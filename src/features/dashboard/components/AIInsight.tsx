@@ -71,12 +71,26 @@ export default function AIInsight() {
         `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
       ).join('\n');
 
-      const { text } = await blink.ai.generateText({
+      setMessages(prev => [...prev, { role: 'assistant', content: '', timestamp: new Date() }]);
+
+      await blink.ai.streamText({
         prompt: `Question about ${department} dashboard: "${userMessage.content}"\n\nContext: ${JSON.stringify(contextData, null, 2)}\n\nHistory:\n${historyContext}`,
         system: "You are a Senior BI Analyst at Intinc. Provide data-driven, concise answers.",
+      }, (chunk) => {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last.role === 'assistant') {
+            return [...prev.slice(0, -1), { ...last, content: last.content + chunk }];
+          }
+          return prev;
+        });
       });
 
-      setMessages(prev => [...prev, { role: 'assistant', content: text, timestamp: new Date() }]);
+      logAuditEvent(currentUser, {
+        action: 'ai.qa',
+        entity: AuditEntities.DASHBOARD,
+        metadata: { department, query: userMessage.content }
+      });
     } catch (error) {
       setMessages(prev => [...prev, { role: 'assistant', content: "Error analyzing data.", timestamp: new Date() }]);
     } finally {
@@ -96,6 +110,7 @@ export default function AIInsight() {
     }
 
     setLoading(true);
+    setInsight('');
     try {
       const contextData = widgets.map(w => ({
         title: w.title,
@@ -103,11 +118,18 @@ export default function AIInsight() {
         summary: w.data.slice(-3)
       }));
 
-      const { text } = await blink.ai.generateText({
+      await blink.ai.streamText({
         prompt: `Analyze ${department} dashboard and generate 3 strategic insights.\n\nContext: ${JSON.stringify(contextData, null, 2)}`,
         system: "Senior BI Analyst. Format as plain text bullet points. Concise and data-driven.",
+      }, (chunk) => {
+        setInsight(prev => prev + chunk);
       });
-      setInsight(text);
+
+      logAuditEvent(currentUser, {
+        action: 'ai.strategic_analysis',
+        entity: AuditEntities.DASHBOARD,
+        metadata: { department }
+      });
     } catch (error) {
       setInsight(generateFallbackInsight());
     } finally {
