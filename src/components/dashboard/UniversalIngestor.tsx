@@ -105,6 +105,10 @@ export default function UniversalIngestor() {
     if (fileName.endsWith('.csv')) return <Table className="text-emerald-500" />;
     if (fileName.endsWith('.pdf')) return <FileText className="text-rose-500" />;
     if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) return <FileSpreadsheet className="text-green-500" />;
+    if (fileName.endsWith('.docx')) return <FileText className="text-blue-500" />;
+    if (fileName.endsWith('.md')) return <FileText className="text-orange-500" />;
+    if (fileName.endsWith('.txt')) return <FileText className="text-slate-400" />;
+    if (fileName.endsWith('.zip')) return <FileUp className="text-purple-500" />;
     return <FileUp className="text-primary" />;
   };
 
@@ -117,7 +121,7 @@ export default function UniversalIngestor() {
         </div>
         <CardTitle className="text-xl font-bold">Universal Data Ingestor</CardTitle>
         <CardDescription>
-          Drop any CSV, PDF, or Excel file. Our AI will automatically extract data and design your widgets.
+          Drop any CSV, PDF, Excel, Word, Markdown, or Zip file. Our AI will automatically extract data and design your widgets.
         </CardDescription>
       </CardHeader>
       
@@ -137,18 +141,22 @@ export default function UniversalIngestor() {
               </div>
               <div className="text-center">
                 <p className="font-bold text-lg">Drop your data here</p>
-                <p className="text-sm text-muted-foreground mt-1">Supports CSV, PDF, XLSX, and more</p>
+                <p className="text-sm text-muted-foreground mt-1">Supports CSV, PDF, XLSX, DOCX, MD, ZIP, and more</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
                 <Badge variant="outline" className="bg-white/5">CSV</Badge>
                 <Badge variant="outline" className="bg-white/5">PDF</Badge>
                 <Badge variant="outline" className="bg-white/5">XLSX</Badge>
+                <Badge variant="outline" className="bg-white/5">DOCX</Badge>
+                <Badge variant="outline" className="bg-white/5">MD</Badge>
+                <Badge variant="outline" className="bg-white/5">TXT</Badge>
+                <Badge variant="outline" className="bg-white/5">ZIP</Badge>
               </div>
               <input 
                 type="file" 
                 ref={fileInputRef} 
                 className="hidden" 
-                accept=".csv,.pdf,.xlsx,.xls,.txt"
+                accept=".csv,.pdf,.xlsx,.xls,.txt,.docx,.md,.zip"
                 onChange={handleFileChange}
               />
             </motion.div>

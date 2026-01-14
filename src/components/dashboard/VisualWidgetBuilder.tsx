@@ -180,10 +180,14 @@ export default function VisualWidgetBuilder({ open, onOpenChange, onAdd }: Visua
                     <div className="p-4 border border-dashed border-white/20 rounded-xl bg-white/5 flex flex-col items-center justify-center gap-3">
                       <FileUp className="w-8 h-8 text-muted-foreground" />
                       <div className="text-center">
-                        <p className="text-sm font-medium">Upload CSV or Excel</p>
+                        <p className="text-sm font-medium">Upload CSV, Excel, Word, or Markdown</p>
                         <p className="text-xs text-muted-foreground">Drag and drop or click to browse</p>
                       </div>
-                      <input type="file" className="hidden" />
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept=".csv,.pdf,.xlsx,.xls,.txt,.docx,.md,.zip"
+                      />
                       <Button variant="outline" size="sm" className="glass">Select File</Button>
                     </div>
 
