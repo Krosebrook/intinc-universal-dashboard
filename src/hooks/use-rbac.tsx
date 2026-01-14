@@ -66,21 +66,31 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
     if (!currentUser?.id) return;
     
     try {
-      // For now, simulate workspace members since the table doesn't exist yet
-      // In production, this would query a workspace_members table
-      setWorkspaceMembers([
-        {
-          id: '1',
+      let data = await blink.db.workspaceMembers.list({ 
+        where: { workspaceId } 
+      });
+      
+      // If no members found, add the current user as owner
+      if ((!data || data.length === 0) && currentUser.id) {
+        const newMember = await blink.db.workspaceMembers.create({
           userId: currentUser.id,
           workspaceId,
-          role: currentRole,
-          email: currentUser.email || 'unknown@example.com',
-          displayName: currentUser.displayName || 'Current User',
-          invitedAt: new Date().toISOString(),
-          joinedAt: new Date().toISOString(),
-          invitedBy: currentUser.id
-        }
-      ]);
+          role: 'admin',
+          email: currentUser.email || '',
+          displayName: currentUser.displayName || 'Owner',
+          joinedAt: new Date().toISOString()
+        });
+        data = [newMember];
+      }
+      
+      setWorkspaceMembers(data || []);
+      
+      // Update current user's role based on workspace membership
+      const member = data?.find(m => m.userId === currentUser.id);
+      if (member) {
+        setCurrentRole(member.role as Role);
+        setPermissions(ROLE_DEFINITIONS[member.role as Role]?.permissions || []);
+      }
     } catch (error) {
       console.error('Failed to fetch workspace members:', error);
     }
@@ -93,6 +103,15 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      await blink.db.workspaceMembers.create({
+        userId: 'pending', // Will be linked when user joins
+        workspaceId,
+        role,
+        email,
+        invitedBy: currentUser?.id || '',
+        invitedAt: new Date().toISOString()
+      });
+
       // Log the invitation action
       await blink.db.auditLogs.create({
         userId: currentUser?.id || '',
@@ -117,6 +136,8 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      await blink.db.workspaceMembers.update(memberId, { role: newRole });
+      
       setWorkspaceMembers(prev => 
         prev.map(m => m.id === memberId ? { ...m, role: newRole } : m)
       );
@@ -143,6 +164,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      await blink.db.workspaceMembers.delete(memberId);
       setWorkspaceMembers(prev => prev.filter(m => m.id !== memberId));
       
       await blink.db.auditLogs.create({

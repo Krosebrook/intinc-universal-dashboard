@@ -22,6 +22,10 @@ import { toast } from 'react-hot-toast';
 import { Layout, Code, XCircle, Filter } from 'lucide-react';
 import { useDashboard } from '../../hooks/use-dashboard';
 
+import { Avatar, AvatarFallback } from '../ui/avatar';
+import { ScrollArea } from '../ui/scroll-area';
+import { Separator } from '../ui/separator';
+
 export type WidgetType = 'area' | 'bar' | 'pie' | 'line' | 'stacked-bar' | 'multi-line' | 'gauge' | 'progress' | 'scatter';
 
 export interface WidgetConfig {
@@ -47,11 +51,36 @@ interface WidgetGridProps {
 const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
 export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
-  const { globalFilters, setGlobalFilter, clearFilters } = useDashboard();
+  const { 
+    globalFilters, 
+    setGlobalFilter, 
+    clearFilters, 
+    comments, 
+    addComment, 
+    fetchComments,
+    savedDashboards,
+    department
+  } = useDashboard();
   const [selectedWidget, setSelectedWidget] = useState<WidgetConfig | null>(null);
   const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
   const [isWidgetDevMode, setIsWidgetDevMode] = useState(false);
   const [widgetJson, setWidgetJson] = useState('');
+  const [widgetComment, setWidgetComment] = useState('');
+
+  const currentDashboardId = savedDashboards.find(d => d.department === department)?.id || 'default';
+
+  useEffect(() => {
+    if (selectedWidget && currentDashboardId !== 'default') {
+      fetchComments(currentDashboardId, selectedWidget.id);
+    }
+  }, [selectedWidget, currentDashboardId]);
+
+  const handleAddWidgetComment = async () => {
+    if (!widgetComment.trim() || !selectedWidget) return;
+    await addComment(currentDashboardId, widgetComment, selectedWidget.id);
+    setWidgetComment('');
+    toast.success('Widget insight added');
+  };
 
   const activeFilterCount = Object.values(globalFilters).filter(Boolean).length;
 
@@ -187,51 +216,125 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
 
       <Dialog open={!!selectedWidget} onOpenChange={() => setSelectedWidget(null)}>
         {selectedWidget && (
-          <DialogContent className="max-w-4xl glass-card border-white/10">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">{selectedWidget.title}</DialogTitle>
-              <DialogDescription>{selectedWidget.description}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  {renderChart(selectedWidget, globalFilters, setGlobalFilter)}
-                </ResponsiveContainer>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <TableIcon size={16} />
-                  Raw Data Explorer
+          <DialogContent className="max-w-6xl glass-card border-white/10 h-[90vh] flex flex-col p-0 overflow-hidden">
+            <DialogHeader className="p-6 border-b border-white/10 shrink-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle className="text-2xl font-bold">{selectedWidget.title}</DialogTitle>
+                  <DialogDescription>{selectedWidget.description}</DialogDescription>
                 </div>
-                <div className="rounded-xl border border-white/5 overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-white/5">
-                      <TableRow>
-                        <TableHead>{selectedWidget.categoryKey}</TableHead>
-                        {Array.isArray(selectedWidget.dataKey) ? (
-                          selectedWidget.dataKey.map(key => (
-                            <TableHead key={key}>{key}</TableHead>
-                          ))
-                        ) : (
-                          <TableHead>{selectedWidget.dataKey}</TableHead>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedWidget.data.slice(0, 5).map((row, i) => (
-                        <TableRow key={i} className="hover:bg-white/5 transition-colors">
-                          <TableCell className="font-medium">{row[selectedWidget.categoryKey]}</TableCell>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary/60 bg-primary/5 px-2 py-1 rounded-full border border-primary/10">
+                    <Maximize2 size={10} />
+                    Drill-down Mode
+                  </div>
+                </div>
+              </div>
+            </DialogHeader>
+            
+            <div className="flex-1 flex overflow-hidden">
+              <div className="flex-1 flex flex-col p-6 overflow-hidden">
+                <div className="flex-1 min-h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {renderChart(selectedWidget, globalFilters, setGlobalFilter)}
+                  </ResponsiveContainer>
+                </div>
+                
+                <Separator className="my-6 bg-white/10" />
+                
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-4">
+                    <TableIcon size={16} className="text-primary" />
+                    Data Explorer
+                  </div>
+                  <ScrollArea className="flex-1 rounded-xl border border-white/5">
+                    <Table>
+                      <TableHeader className="bg-white/5 sticky top-0 z-10 backdrop-blur-md">
+                        <TableRow>
+                          <TableHead className="font-bold">{selectedWidget.categoryKey}</TableHead>
                           {Array.isArray(selectedWidget.dataKey) ? (
                             selectedWidget.dataKey.map(key => (
-                              <TableCell key={key}>{row[key]}</TableCell>
+                              <TableHead key={key} className="font-bold">{key}</TableHead>
                             ))
                           ) : (
-                            <TableCell>{row[selectedWidget.dataKey]}</TableCell>
+                            <TableHead className="font-bold">{selectedWidget.dataKey}</TableHead>
                           )}
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedWidget.data.map((row, i) => (
+                          <TableRow key={i} className="hover:bg-white/5 transition-colors">
+                            <TableCell className="font-medium">{row[selectedWidget.categoryKey]}</TableCell>
+                            {Array.isArray(selectedWidget.dataKey) ? (
+                              selectedWidget.dataKey.map(key => (
+                                <TableCell key={key}>{row[key]?.toLocaleString()}</TableCell>
+                              ))
+                            ) : (
+                              <TableCell>{row[selectedWidget.dataKey]?.toLocaleString()}</TableCell>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </div>
+              </div>
+
+              <div className="w-80 border-l border-white/10 bg-white/2 flex flex-col">
+                <div className="p-4 border-b border-white/10 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  <h4 className="text-sm font-bold uppercase tracking-widest">Widget Insights</h4>
+                </div>
+                
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    {comments.filter(c => c.widget_id === selectedWidget.id).length === 0 ? (
+                      <div className="text-center py-8 opacity-40">
+                        <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                        <p className="text-[10px] font-bold uppercase tracking-widest">No widget insights</p>
+                      </div>
+                    ) : (
+                      comments.filter(c => c.widget_id === selectedWidget.id).map((comment) => (
+                        <div key={comment.id} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-5 h-5 border border-white/10">
+                              <AvatarFallback className="bg-primary/20 text-primary text-[8px]">
+                                {comment.user_id?.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-[10px] font-bold text-white/70">
+                              {comment.user_id?.substring(0, 5)}
+                            </span>
+                            <span className="text-[8px] text-white/30 ml-auto">
+                              {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-xs text-white/90 leading-relaxed">
+                            {comment.content}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+
+                <div className="p-4 border-t border-white/10 bg-white/5 mt-auto">
+                  <div className="space-y-2">
+                    <textarea 
+                      placeholder="Add an insight..." 
+                      value={widgetComment}
+                      onChange={(e) => setWidgetComment(e.target.value)}
+                      className="w-full min-h-[80px] bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 transition-colors resize-none"
+                    />
+                    <Button 
+                      size="sm" 
+                      className="w-full h-9 rounded-lg text-[10px] font-bold uppercase tracking-widest"
+                      onClick={handleAddWidgetComment}
+                      disabled={!widgetComment.trim()}
+                    >
+                      Post Insight
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

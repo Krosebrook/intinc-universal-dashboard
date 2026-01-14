@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { Activity, Sparkles, Loader2, RefreshCw } from 'lucide-react';
+import { Activity, Sparkles, Loader2, RefreshCw, MessageSquare, Send, ChevronLeft } from 'lucide-react';
 import { blink } from '../../lib/blink';
 import { useDashboard } from '../../hooks/use-dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import type { BlinkUser } from '@blinkdotnew/sdk';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
 
 export default function AIInsight() {
   const { department, widgets } = useDashboard();
   const [insight, setInsight] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
+  const [mode, setMode] = useState<'insights' | 'qa'>('insights');
+  const [query, setQuery] = useState('');
+  const [qaResponse, setQaResponse] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Track auth state
   useEffect(() => {
@@ -20,6 +26,40 @@ export default function AIInsight() {
     });
     return unsubscribe;
   }, []);
+
+  const handleQuery = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!query.trim() || loading || !currentUser?.id) return;
+
+    setLoading(true);
+    try {
+      const contextData = widgets.map(w => ({
+        title: w.title,
+        type: w.type,
+        data: w.data.slice(-10) // More data for Q&A
+      }));
+
+      const { text } = await blink.ai.generateText({
+        prompt: `The user has a question about their dashboard data for the ${department} department.
+        
+        Question: "${query}"
+        
+        Dashboard Data Context:
+        ${JSON.stringify(contextData, null, 2)}
+        
+        Provide a concise, data-driven answer based ONLY on the provided context. If the data doesn't contain the answer, politely say so. Be professional and helpful.`,
+        system: "You are a Senior Business Intelligence Analyst at Intinc. Answer user questions about dashboard data accurately and concisely.",
+      });
+
+      setQaResponse(text);
+      setQuery('');
+    } catch (error) {
+      console.error('QA Error:', error);
+      setQaResponse("I encountered an error analyzing your question. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchInsight = async (retryCount = 0) => {
     const MAX_RETRIES = 2;
@@ -109,24 +149,45 @@ export default function AIInsight() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
-              <Activity className="w-5 h-5 text-white" />
+              {mode === 'insights' ? (
+                <Activity className="w-5 h-5 text-white" />
+              ) : (
+                <MessageSquare className="w-5 h-5 text-white" />
+              )}
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-primary-foreground/70">Intelligence Engine</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-primary-foreground/70">
+              {mode === 'insights' ? 'Intelligence Engine' : 'Data Assistant'}
+            </span>
           </div>
-          <button 
-            onClick={fetchInsight}
-            disabled={loading}
-            className="text-primary-foreground/50 hover:text-primary-foreground transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={16} className={cn(loading && "animate-spin")} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                setMode(mode === 'insights' ? 'qa' : 'insights');
+                setQaResponse(null);
+              }}
+              className="text-xs font-bold uppercase tracking-widest text-primary-foreground/50 hover:text-primary-foreground transition-colors px-3 py-1 rounded-full border border-white/10"
+            >
+              {mode === 'insights' ? 'Ask a Question' : 'Back to Insights'}
+            </button>
+            {mode === 'insights' && (
+              <button 
+                onClick={() => fetchInsight()}
+                disabled={loading}
+                className="text-primary-foreground/50 hover:text-primary-foreground transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={cn(loading && "animate-spin")} />
+              </button>
+            )}
+          </div>
         </div>
-        <CardTitle className="text-2xl text-white font-bold tracking-tight">AI Analysis</CardTitle>
+        <CardTitle className="text-2xl text-white font-bold tracking-tight">
+          {mode === 'insights' ? 'AI Analysis' : 'Data Q&A'}
+        </CardTitle>
       </CardHeader>
       
-      <CardContent className="relative z-10">
+      <CardContent className="relative z-10 flex flex-col h-[calc(100%-120px)]">
         <AnimatePresence mode="wait">
-          {loading ? (
+          {loading && mode === 'insights' ? (
             <motion.div 
               key="loading"
               initial={{ opacity: 0 }}
@@ -137,13 +198,13 @@ export default function AIInsight() {
               <Loader2 className="w-8 h-8 text-white/50 animate-spin" />
               <p className="text-sm text-white/40 font-medium">Analyzing department data...</p>
             </motion.div>
-          ) : (
+          ) : mode === 'insights' ? (
             <motion.div 
-              key="content"
+              key="insights"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              className="space-y-6"
+              className="space-y-6 overflow-y-auto pr-2 custom-scrollbar"
             >
               {insight.split('\n').filter(p => p.trim()).map((p, i) => (
                 <div key={i} className="flex gap-4 group">
@@ -153,6 +214,56 @@ export default function AIInsight() {
                   </p>
                 </div>
               ))}
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="qa"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex flex-col h-full space-y-4"
+            >
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar" ref={scrollContainerRef}>
+                {qaResponse ? (
+                  <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-md border border-white/5">
+                    <p className="text-sm text-white/90 leading-relaxed italic">
+                      {qaResponse}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-4 p-8">
+                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                      <Sparkles className="text-white/30" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-white/70 font-medium">Ask anything about your data</p>
+                      <p className="text-xs text-white/40">"What was the highest revenue peak?" or "How is the team performing?"</p>
+                    </div>
+                  </div>
+                )}
+                {loading && (
+                  <div className="flex items-center gap-2 text-white/50 text-xs px-2">
+                    <Loader2 size={12} className="animate-spin" />
+                    <span>Thinking...</span>
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleQuery} className="flex gap-2 relative mt-auto">
+                <Input 
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Type your question..."
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl h-11 pr-12 focus-visible:ring-white/20"
+                />
+                <Button 
+                  type="submit"
+                  disabled={loading || !query.trim()}
+                  size="icon"
+                  className="absolute right-1 top-1 h-9 w-9 bg-white text-primary hover:bg-white/90 rounded-lg shrink-0"
+                >
+                  <Send size={18} />
+                </Button>
+              </form>
             </motion.div>
           )}
         </AnimatePresence>

@@ -429,9 +429,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const fetchComments = async (dashboardId: string) => {
+  const fetchComments = async (dashboardId: string, widgetId?: string) => {
     try {
-      const results = await blink.db.comments.list({ dashboard_id: dashboardId });
+      const where: any = { dashboardId };
+      if (widgetId) {
+        where.widgetId = widgetId;
+      }
+      const results = await blink.db.comments.list({ where });
       setComments(results || []);
     } catch (error) {
       console.error('Error fetching comments:', error);

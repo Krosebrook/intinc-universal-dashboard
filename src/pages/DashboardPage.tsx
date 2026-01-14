@@ -243,13 +243,13 @@ export default function DashboardPage() {
 
                         <ScrollArea className="flex-1 p-6">
                           <div className="space-y-6">
-                            {comments.length === 0 ? (
+                            {comments.filter(c => !c.widget_id).length === 0 ? (
                               <div className="text-center py-12">
                                 <MessageSquare className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
                                 <p className="text-muted-foreground">No insights yet. Start the conversation!</p>
                               </div>
                             ) : (
-                              comments.map((comment) => (
+                              comments.filter(c => !c.widget_id).map((comment) => (
                                 <div key={comment.id} className="flex gap-4">
                                   <Avatar className="w-8 h-8 border border-white/10">
                                     <AvatarFallback className="bg-primary/20 text-primary text-xs">
