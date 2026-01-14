@@ -123,6 +123,14 @@ export default function DashboardPage() {
             <Button 
               variant="outline" 
               className="glass h-11 px-4 rounded-xl hidden sm:flex"
+              onClick={() => setShowTemplates(true)}
+            >
+              <Layout className="w-4 h-4 mr-2" />
+              Templates
+            </Button>
+            <Button 
+              variant="outline" 
+              className="glass h-11 px-4 rounded-xl hidden sm:flex"
               onClick={() => setShowSaveDialog(true)}
             >
               <Save className="w-4 h-4 mr-2" />

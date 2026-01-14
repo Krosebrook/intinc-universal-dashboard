@@ -19,7 +19,12 @@ import {
   CreditCard,
   Ticket,
   Cloud,
-  Github as GithubIcon
+  Github as GithubIcon,
+  TrendingUp,
+  Brain,
+  Zap,
+  Shield,
+  Heart
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
@@ -31,6 +36,10 @@ const departments: { id: Department; icon: any; label: string }[] = [
   { id: 'HR', icon: Users, label: 'Human Resources' },
   { id: 'IT', icon: Cpu, label: 'IT Infrastructure' },
   { id: 'Marketing', icon: PieChart, label: 'Marketing Ops' },
+  { id: 'SaaS', icon: TrendingUp, label: 'SaaS & Subscription' },
+  { id: 'Product', icon: Heart, label: 'Product & Health' },
+  { id: 'AI', icon: Brain, label: 'AI & LLM Ops' },
+  { id: 'Operations', icon: Zap, label: 'Enterprise Ops' },
 ];
 
 const mockSources = [
@@ -38,6 +47,7 @@ const mockSources = [
   { id: 'Jira', icon: Ticket, color: 'text-[#0052CC]' },
   { id: 'AWS', icon: Cloud, color: 'text-[#FF9900]' },
   { id: 'GitHub', icon: GithubIcon, color: 'text-[#181717]' },
+  { id: 'OpenAI', icon: Brain, color: 'text-[#74AA9C]' },
 ] as const;
 
 export default function Sidebar({ onOpenSettings }: { onOpenSettings?: () => void }) {

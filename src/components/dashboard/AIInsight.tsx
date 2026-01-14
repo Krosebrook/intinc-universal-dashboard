@@ -81,7 +81,11 @@ export default function AIInsight() {
       Sales: `• Revenue is showing positive momentum with strong Enterprise segment growth\n• Active orders are up, indicating healthy pipeline activity\n• Focus on improving conversion rates to maximize lead efficiency`,
       HR: `• Headcount growth indicates organizational expansion\n• Low turnover rate reflects strong employee satisfaction\n• Monitor open roles to maintain hiring velocity`,
       IT: `• System uptime exceeds SLA targets, maintaining reliability\n• Security posture is improving with reduced alert volume\n• API performance is within acceptable thresholds`,
-      Marketing: `• MQL generation is trending upward, driving pipeline growth\n• CAC efficiency improving, indicating better targeting\n• Social reach expansion presents brand awareness opportunities`
+      Marketing: `• MQL generation is trending upward, driving pipeline growth\n• CAC efficiency improving, indicating better targeting\n• Social reach expansion presents brand awareness opportunities`,
+      SaaS: `• MRR growth is accelerating across enterprise tiers\n• Churn rate remains low, indicating strong product-market fit\n• Expansion revenue from existing customers is a primary growth driver`,
+      Product: `• Customer health scores are high, but monitor at-risk segments\n• Product engagement shows high stickiness and DAU/MAU ratios\n• Recent feature releases have driven significant breadth of adoption`,
+      AI: `• Token utilization is optimized across model providers\n• Cost-per-request is trending down with better routing logic\n• Inference quality remains high with low hallucination rates`,
+      Operations: `• Administrative action auditing is fully compliant with policies\n• Security remediation times are improving for critical vulnerabilities\n• System utilization is balanced across all infrastructure resources`
     };
     return insights[department] || 'Dashboard insights will update when connection is restored.';
   };

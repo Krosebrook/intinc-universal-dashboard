@@ -5,8 +5,9 @@ import { WidgetConfig } from '../components/dashboard/WidgetGrid';
 import { blink } from '../lib/blink';
 import { toast } from 'react-hot-toast';
 import type { BlinkUser } from '@blinkdotnew/sdk';
+import { EXPANDED_TEMPLATES } from '../lib/templates';
 
-export type Department = 'Sales' | 'HR' | 'IT' | 'Marketing';
+export type Department = 'Sales' | 'HR' | 'IT' | 'Marketing' | 'SaaS' | 'Product' | 'AI' | 'Operations';
 
 interface DashboardContextType {
   department: Department;
@@ -27,12 +28,13 @@ interface DashboardContextType {
   fetchComments: (dashboardId: string) => Promise<void>;
   workspaces: any[];
   createWorkspace: (name: string) => Promise<void>;
-  generateMockData: (source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub') => void;
+  generateMockData: (source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub' | 'OpenAI') => void;
   currentView: 'overview' | 'explorer';
   setCurrentView: (view: 'overview' | 'explorer') => void;
   globalFilters: Record<string, any>;
   setGlobalFilter: (key: string, value: any) => void;
   clearFilters: () => void;
+  loadTemplate: (templateId: string) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -88,6 +90,22 @@ const DEPT_DATA: Record<Department, { kpis: KPIData[], widgets: WidgetConfig[] }
       { id: 'campaign-perf', type: 'line', title: 'Campaign Performance', description: 'Click-through rates for active ad campaigns', dataKey: 'ctr', categoryKey: 'campaign', gridSpan: 6, data: [{ campaign: 'Search Ads', ctr: 4.2 }, { campaign: 'Social Display', ctr: 2.8 }, { campaign: 'Video Pre-roll', ctr: 1.5 }, { campaign: 'Email Newsletter', ctr: 12.4 }] },
       { id: 'lead-sources', type: 'pie', title: 'Lead Sources', description: 'Distribution of leads by primary channel', dataKey: 'value', categoryKey: 'source', gridSpan: 6, data: [{ source: 'Organic', value: 45 }, { source: 'Paid Search', value: 25 }, { source: 'Social', value: 15 }, { source: 'Referral', value: 10 }, { source: 'Direct', value: 5 }] },
     ]
+  },
+  SaaS: {
+    kpis: EXPANDED_TEMPLATES.find(t => t.id === 'mrr-growth')?.kpis || [],
+    widgets: EXPANDED_TEMPLATES.find(t => t.id === 'mrr-growth')?.widgets || []
+  },
+  Product: {
+    kpis: EXPANDED_TEMPLATES.find(t => t.id === 'customer-health')?.kpis || [],
+    widgets: EXPANDED_TEMPLATES.find(t => t.id === 'customer-health')?.widgets || []
+  },
+  AI: {
+    kpis: EXPANDED_TEMPLATES.find(t => t.id === 'token-cost')?.kpis || [],
+    widgets: EXPANDED_TEMPLATES.find(t => t.id === 'token-cost')?.widgets || []
+  },
+  Operations: {
+    kpis: EXPANDED_TEMPLATES.find(t => t.id === 'it-audit')?.kpis || [],
+    widgets: EXPANDED_TEMPLATES.find(t => t.id === 'it-audit')?.widgets || []
   }
 };
 
@@ -169,6 +187,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           mockWidgets = [
             { id: 'github-activity', type: 'line', title: 'Commit Activity', description: 'Frequency of code pushes across all branches', dataKey: 'commits', categoryKey: 'date', gridSpan: 12, data: Array.from({ length: 14 }).map((_, i) => ({ date: `Jan ${i + 1}`, commits: Math.floor(Math.random() * 20) + 5 })) },
           ];
+          break;
+        case 'OpenAI':
+          const aiTemplate = EXPANDED_TEMPLATES.find(t => t.id === 'token-cost');
+          if (aiTemplate) {
+            mockKpis = aiTemplate.kpis;
+            mockWidgets = aiTemplate.widgets;
+          }
           break;
       }
 
@@ -466,6 +491,23 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentUser?.id]);
 
+  const loadTemplate = (templateId: string) => {
+    const template = EXPANDED_TEMPLATES.find(t => t.id === templateId);
+    if (template) {
+      setDepartment(template.department);
+      setWidgets(template.widgets);
+      setKpis(template.kpis);
+      toast.success(`Loaded template: ${template.name}`);
+    } else {
+      // Check base templates or fallback
+      const baseMatch = Object.entries(DEPT_DATA).find(([key]) => key.toLowerCase() === templateId.toLowerCase());
+      if (baseMatch) {
+        setDepartment(baseMatch[0] as Department);
+        toast.success(`Loaded ${baseMatch[0]} dashboard`);
+      }
+    }
+  };
+
   return (
     <DashboardContext.Provider value={{ 
       department, 
@@ -490,7 +532,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setCurrentView,
       globalFilters,
       setGlobalFilter,
-      clearFilters
+      clearFilters,
+      loadTemplate
     }}>
       {children}
     </DashboardContext.Provider>

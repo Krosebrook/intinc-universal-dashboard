@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Layout, Check, Sparkles, TrendingUp, Users, Shield, Search, Loader2 } from 'lucide-react';
+import { Layout, Check, Sparkles, TrendingUp, Users, Shield, Search, Loader2, DollarSign, Cpu, Activity, Brain, Heart, Lock, BarChart3 } from 'lucide-react';
 import { useDashboard, Department } from '../../hooks/use-dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { blink } from '../../lib/blink';
+import { EXPANDED_TEMPLATES } from '../../lib/templates';
 
 interface Template {
   id: string;
@@ -16,11 +17,22 @@ interface Template {
   department: Department;
 }
 
-const templates: Template[] = [
+const baseTemplates: Template[] = [
   { id: 'sales-exec', name: 'Sales Executive', description: 'High-level revenue and conversion overview.', icon: TrendingUp, department: 'Sales' },
   { id: 'hr-retention', name: 'Retention Analysis', description: 'Deep dive into employee churn and happiness.', icon: Users, department: 'HR' },
   { id: 'it-sec', name: 'Security Posture', description: 'Monitoring threats and system vulnerabilities.', icon: Shield, department: 'IT' },
   { id: 'mkt-roi', name: 'Marketing ROI', description: 'Analyze spend across all digital channels.', icon: Sparkles, department: 'Marketing' },
+];
+
+const templates: Template[] = [
+  ...baseTemplates,
+  ...EXPANDED_TEMPLATES.map(t => ({
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    icon: t.icon,
+    department: t.department
+  }))
 ];
 
 interface TemplateGalleryProps {
@@ -29,7 +41,7 @@ interface TemplateGalleryProps {
 }
 
 export default function TemplateGallery({ open, onOpenChange }: TemplateGalleryProps) {
-  const { department, setDepartment } = useDashboard();
+  const { department, setDepartment, loadTemplate } = useDashboard();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [suggestedTemplateId, setSuggestedTemplateId] = useState<string | null>(null);
@@ -42,7 +54,7 @@ export default function TemplateGallery({ open, onOpenChange }: TemplateGalleryP
     
     try {
       const { text } = await blink.ai.generateText({
-        system: "You are a dashboard template matcher. Given a user's request, identify the best matching template ID from the list. Return ONLY the ID.",
+        system: "You are a dashboard template matcher. Given a user's request, identify the best matching template ID from the list. Return ONLY the ID. Be smart about matching synonyms like 'revenue' to 'mrr-growth' or 'token' to 'token-cost'.",
         prompt: `User Request: "${searchQuery}"
         
         Available Templates:
@@ -113,7 +125,7 @@ export default function TemplateGallery({ open, onOpenChange }: TemplateGalleryP
                 <Card 
                   className={`cursor-pointer transition-all border-white/5 hover:border-primary/50 relative overflow-hidden group ${department === template.department ? 'bg-primary/5 border-primary/30' : 'bg-white/5'} ${suggestedTemplateId === template.id ? 'border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]' : ''}`}
                   onClick={() => {
-                    setDepartment(template.department);
+                    loadTemplate(template.id);
                     onOpenChange(false);
                   }}
                 >
