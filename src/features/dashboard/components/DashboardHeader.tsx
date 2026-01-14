@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Layout, Save, Share2, MessageSquare, Download, Plus } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Department } from '../../../types/dashboard';
+import { cn } from '../../../lib/utils';
 
 interface DashboardHeaderProps {
   department: Department;
