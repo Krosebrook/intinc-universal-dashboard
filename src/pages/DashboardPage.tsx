@@ -11,6 +11,7 @@ import { SmartAssistant } from '../components/dashboard/SmartAssistant';
 import { useDashboard } from '../hooks/use-dashboard';
 import { useExport } from '../hooks/use-export';
 import { motion } from 'framer-motion';
+import { Save } from 'lucide-react';
 import { DashboardHeader } from '../features/dashboard/components/DashboardHeader';
 import { DashboardDevMode } from '../features/dashboard/components/DashboardDevMode';
 import { DashboardCollaboration } from '../features/collaboration/components/DashboardCollaboration';
