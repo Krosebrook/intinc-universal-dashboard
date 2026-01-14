@@ -15,10 +15,20 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const handleOnboardingComplete = async () => {
+    // Always update UI state and localStorage first (the primary source of truth for onboarding)
     setShowOnboarding(false);
     localStorage.setItem('onboarding_completed', 'true');
     
+    // Attempt to persist to user metadata if authenticated (non-blocking, best-effort)
+    // This is a secondary sync - localStorage is authoritative for onboarding state
     try {
+      // Check if user is authenticated first
+      const isAuthenticated = blink.auth.isAuthenticated();
+      if (!isAuthenticated) {
+        // User not logged in - that's fine, localStorage handles onboarding state
+        return;
+      }
+      
       const user = await blink.auth.me();
       if (user) {
         const metadata = user.metadata ? JSON.parse(user.metadata) : {};
@@ -30,8 +40,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         });
         logAction('onboarding_complete', 'user');
       }
-    } catch (error) {
-      console.error('Failed to update onboarding metadata:', error);
+    } catch {
+      // Silently fail - localStorage already has the onboarding state
+      // This can fail if token expired during session, but localStorage handles it
     }
   };
 
