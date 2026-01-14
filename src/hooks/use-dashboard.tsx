@@ -30,6 +30,9 @@ interface DashboardContextType {
   generateMockData: (source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub') => void;
   currentView: 'overview' | 'explorer';
   setCurrentView: (view: 'overview' | 'explorer') => void;
+  globalFilters: Record<string, any>;
+  setGlobalFilter: (key: string, value: any) => void;
+  clearFilters: () => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -96,8 +99,22 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [comments, setComments] = useState<any[]>([]);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [currentView, setCurrentView] = useState<'overview' | 'explorer'>('overview');
+  const [globalFilters, setGlobalFilters] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
+
+  const setGlobalFilter = (key: string, value: any) => {
+    setGlobalFilters(prev => ({
+      ...prev,
+      [key]: prev[key] === value ? undefined : value // Toggle filter
+    }));
+    toast.success(`Filter applied: ${key} = ${value}`);
+  };
+
+  const clearFilters = () => {
+    setGlobalFilters({});
+    toast.success('All filters cleared');
+  };
 
   const generateMockData = (source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub') => {
     setIsLoading(true);
@@ -470,7 +487,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       createWorkspace,
       generateMockData,
       currentView,
-      setCurrentView
+      setCurrentView,
+      globalFilters,
+      setGlobalFilter,
+      clearFilters
     }}>
       {children}
     </DashboardContext.Provider>

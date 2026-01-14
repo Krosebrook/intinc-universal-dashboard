@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart,
@@ -18,6 +18,9 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
+import { toast } from 'react-hot-toast';
+import { Layout, Code, XCircle, Filter } from 'lucide-react';
+import { useDashboard } from '../../hooks/use-dashboard';
 
 export type WidgetType = 'area' | 'bar' | 'pie' | 'line' | 'stacked-bar' | 'multi-line' | 'gauge' | 'progress' | 'scatter';
 
@@ -44,8 +47,13 @@ interface WidgetGridProps {
 const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
 export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
+  const { globalFilters, setGlobalFilter, clearFilters } = useDashboard();
   const [selectedWidget, setSelectedWidget] = useState<WidgetConfig | null>(null);
   const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
+  const [isWidgetDevMode, setIsWidgetDevMode] = useState(false);
+  const [widgetJson, setWidgetJson] = useState('');
+
+  const activeFilterCount = Object.values(globalFilters).filter(Boolean).length;
 
   const handleDelete = (id: string) => {
     if (onUpdate) {
@@ -55,13 +63,64 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
 
   const handleEditSave = () => {
     if (editingWidget && onUpdate) {
-      onUpdate(widgets.map(w => w.id === editingWidget.id ? editingWidget : w));
-      setEditingWidget(null);
+      if (isWidgetDevMode) {
+        try {
+          const parsed = JSON.parse(widgetJson);
+          onUpdate(widgets.map(w => w.id === editingWidget.id ? parsed : w));
+          setEditingWidget(null);
+          setIsWidgetDevMode(false);
+          toast.success('Widget configuration updated');
+        } catch (e) {
+          toast.error('Invalid JSON syntax');
+        }
+      } else {
+        onUpdate(widgets.map(w => w.id === editingWidget.id ? editingWidget : w));
+        setEditingWidget(null);
+        toast.success('Widget updated');
+      }
     }
   };
 
+  useEffect(() => {
+    if (editingWidget && isWidgetDevMode) {
+      setWidgetJson(JSON.stringify(editingWidget, null, 2));
+    }
+  }, [editingWidget, isWidgetDevMode]);
+
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="space-y-6">
+      <AnimatePresence>
+        {activeFilterCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center justify-between glass-card border-primary/30 bg-primary/5 px-4 py-2 rounded-xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
+                <Filter size={14} />
+                Active Filters ({activeFilterCount})
+              </div>
+              <div className="flex gap-2">
+                {Object.entries(globalFilters).map(([key, value]) => value && (
+                  <div key={key} className="flex items-center gap-2 bg-white/10 px-2 py-1 rounded-lg text-xs font-medium border border-white/5">
+                    <span className="text-muted-foreground">{key}:</span> {String(value)}
+                    <button onClick={() => setGlobalFilter(key, value)} className="hover:text-primary transition-colors">
+                      <XCircle size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-[10px] font-bold uppercase tracking-widest h-7">
+              Clear All
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="grid grid-cols-12 gap-6">
       {widgets.map((widget, index) => (
         <motion.div
           key={widget.id}
@@ -112,7 +171,7 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
             </CardHeader>
             <CardContent className="h-[300px] mt-2 relative">
               <ResponsiveContainer width="100%" height="100%">
-                {renderChart(widget)}
+                {renderChart(widget, globalFilters, setGlobalFilter)}
               </ResponsiveContainer>
               
               <div className="absolute bottom-4 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -136,7 +195,7 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
             <div className="space-y-6">
               <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  {renderChart(selectedWidget)}
+                  {renderChart(selectedWidget, globalFilters, setGlobalFilter)}
                 </ResponsiveContainer>
               </div>
               <div className="space-y-4">
@@ -180,98 +239,125 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
         )}
       </Dialog>
 
-      <Dialog open={!!editingWidget} onOpenChange={() => setEditingWidget(null)}>
+      <Dialog open={!!editingWidget} onOpenChange={() => { setEditingWidget(null); setIsWidgetDevMode(false); }}>
         {editingWidget && (
-          <DialogContent className="glass-card border-white/10">
-            <DialogHeader>
-              <DialogTitle>Edit Widget Configuration</DialogTitle>
+          <DialogContent className="glass-card border-white/10 max-w-2xl">
+            <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+              <DialogTitle>Widget Settings</DialogTitle>
+              <div className="flex items-center gap-2 mr-6">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Dev Mode</span>
+                <Switch 
+                  checked={isWidgetDevMode} 
+                  onCheckedChange={setIsWidgetDevMode}
+                  className="scale-75"
+                />
+              </div>
             </DialogHeader>
+            
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input 
-                  value={editingWidget.title} 
-                  onChange={e => setEditingWidget({...editingWidget, title: e.target.value})}
-                  className="bg-white/5 border-white/10"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Input 
-                  value={editingWidget.description} 
-                  onChange={e => setEditingWidget({...editingWidget, description: e.target.value})}
-                  className="bg-white/5 border-white/10"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              {isWidgetDevMode ? (
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Chart Type</Label>
-                    <Select 
-                      value={editingWidget.type} 
-                      onValueChange={(val: WidgetType) => setEditingWidget({...editingWidget, type: val})}
-                    >
-                      <SelectTrigger className="bg-white/5 border-white/10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="glass-card border-white/10">
-                        <SelectItem value="area">Area Chart</SelectItem>
-                        <SelectItem value="bar">Bar Chart</SelectItem>
-                        <SelectItem value="stacked-bar">Stacked Bar Chart</SelectItem>
-                        <SelectItem value="line">Line Chart</SelectItem>
-                        <SelectItem value="pie">Pie Chart</SelectItem>
-                        <SelectItem value="scatter">Scatter Plot</SelectItem>
-                        <SelectItem value="gauge">Gauge</SelectItem>
-                        <SelectItem value="progress">Progress Bar</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center gap-2 text-primary">
+                    <Code size={16} />
+                    <span className="text-xs font-bold uppercase tracking-wider">Direct WSL Editor</span>
                   </div>
+                  <textarea
+                    value={widgetJson}
+                    onChange={(e) => setWidgetJson(e.target.value)}
+                    className="w-full h-[400px] bg-zinc-950/50 border border-white/10 rounded-xl p-4 font-mono text-xs text-emerald-400 focus:outline-none focus:border-primary/50 transition-colors"
+                    spellCheck={false}
+                  />
+                </div>
+              ) : (
+                <>
                   <div className="space-y-2">
-                    <Label>Grid Span</Label>
-                    <Select 
-                      value={String(editingWidget.gridSpan || 6)} 
-                      onValueChange={(val) => setEditingWidget({...editingWidget, gridSpan: parseInt(val)})}
-                    >
-                      <SelectTrigger className="bg-white/5 border-white/10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="glass-card border-white/10">
-                        <SelectItem value="4">Small (1/3)</SelectItem>
-                        <SelectItem value="6">Medium (1/2)</SelectItem>
-                        <SelectItem value="8">Large (2/3)</SelectItem>
-                        <SelectItem value="12">Full Width</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center space-x-2 pt-2">
-                    <Switch 
-                      id="forecast-mode" 
-                      checked={editingWidget.forecast} 
-                      onCheckedChange={(val) => setEditingWidget({...editingWidget, forecast: val})}
+                    <Label>Title</Label>
+                    <Input 
+                      value={editingWidget.title} 
+                      onChange={e => setEditingWidget({...editingWidget, title: e.target.value})}
+                      className="bg-white/5 border-white/10"
                     />
-                    <Label htmlFor="forecast-mode">Enable AI Forecast</Label>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Live Preview</Label>
-                  <div className="h-[180px] w-full border border-white/10 rounded-xl bg-white/5 overflow-hidden flex items-center justify-center p-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      {renderChart(editingWidget)}
-                    </ResponsiveContainer>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Input 
+                      value={editingWidget.description} 
+                      onChange={e => setEditingWidget({...editingWidget, description: e.target.value})}
+                      className="bg-white/5 border-white/10"
+                    />
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-center">Changes reflect instantly in the builder</p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Chart Type</Label>
+                        <Select 
+                          value={editingWidget.type} 
+                          onValueChange={(val: WidgetType) => setEditingWidget({...editingWidget, type: val})}
+                        >
+                          <SelectTrigger className="bg-white/5 border-white/10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="glass-card border-white/10">
+                            <SelectItem value="area">Area Chart</SelectItem>
+                            <SelectItem value="bar">Bar Chart</SelectItem>
+                            <SelectItem value="stacked-bar">Stacked Bar Chart</SelectItem>
+                            <SelectItem value="line">Line Chart</SelectItem>
+                            <SelectItem value="pie">Pie Chart</SelectItem>
+                            <SelectItem value="scatter">Scatter Plot</SelectItem>
+                            <SelectItem value="gauge">Gauge</SelectItem>
+                            <SelectItem value="progress">Progress Bar</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Grid Span</Label>
+                        <Select 
+                          value={String(editingWidget.gridSpan || 6)} 
+                          onValueChange={(val) => setEditingWidget({...editingWidget, gridSpan: parseInt(val)})}
+                        >
+                          <SelectTrigger className="bg-white/5 border-white/10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="glass-card border-white/10">
+                            <SelectItem value="4">Small (1/3)</SelectItem>
+                            <SelectItem value="6">Medium (1/2)</SelectItem>
+                            <SelectItem value="8">Large (2/3)</SelectItem>
+                            <SelectItem value="12">Full Width</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center space-x-2 pt-2">
+                        <Switch 
+                          id="forecast-mode" 
+                          checked={editingWidget.forecast} 
+                          onCheckedChange={(val) => setEditingWidget({...editingWidget, forecast: val})}
+                        />
+                        <Label htmlFor="forecast-mode">Enable AI Forecast</Label>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Live Preview</Label>
+                      <div className="h-[180px] w-full border border-white/10 rounded-xl bg-white/5 overflow-hidden flex items-center justify-center p-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                          {renderChart(editingWidget, globalFilters, setGlobalFilter)}
+                        </ResponsiveContainer>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground text-center">Changes reflect instantly in the builder</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingWidget(null)} className="glass">Cancel</Button>
+              <Button variant="outline" onClick={() => { setEditingWidget(null); setIsWidgetDevMode(false); }} className="glass">Cancel</Button>
               <Button onClick={handleEditSave}>Save Changes</Button>
             </DialogFooter>
           </DialogContent>
         )}
       </Dialog>
     </div>
+  </div>
   );
 }
 
@@ -306,21 +392,40 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-function renderChart(widget: WidgetConfig) {
+function renderChart(widget: WidgetConfig, globalFilters: Record<string, any>, setGlobalFilter: (key: string, value: any) => void) {
   const colors = widget.colors || DEFAULT_COLORS;
   const dataKeys = Array.isArray(widget.dataKey) ? widget.dataKey : [widget.dataKey];
+  const activeFilterCount = Object.values(globalFilters).filter(Boolean).length;
   
+  // Filter data based on global filters (excluding filters that belong to this widget's categoryKey to allow drill-down selection)
+  const filteredData = widget.data.filter(item => {
+    return Object.entries(globalFilters).every(([key, value]) => {
+      if (!value || key === widget.categoryKey) return true;
+      return String(item[key]) === String(value);
+    });
+  });
+
   // Forecast processing: split data into actual and forecast if requested
-  const chartData = widget.forecast ? widget.data.map((d, i) => ({
+  const chartData = widget.forecast ? filteredData.map((d, i) => ({
     ...d,
     // If it's the last 30% of data, it's forecast
-    isForecast: i > widget.data.length * 0.7
-  })) : widget.data;
+    isForecast: i > filteredData.length * 0.7
+  })) : filteredData;
+
+  const handleClick = (data: any) => {
+    if (data && data.activeLabel) {
+      setGlobalFilter(widget.categoryKey, data.activeLabel);
+    } else if (data && data.name) {
+      setGlobalFilter(widget.categoryKey, data.name);
+    } else if (data && data.payload && data.payload[widget.categoryKey]) {
+      setGlobalFilter(widget.categoryKey, data.payload[widget.categoryKey]);
+    }
+  };
 
   switch (widget.type) {
     case 'area':
       return (
-        <AreaChart data={chartData}>
+        <AreaChart data={chartData} onClick={handleClick}>
           <defs>
             {dataKeys.map((key, i) => (
               <linearGradient key={key} id={`gradient-${widget.id}-${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -346,40 +451,55 @@ function renderChart(widget: WidgetConfig) {
             tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
           />
           <Tooltip content={<CustomTooltip />} />
-          {dataKeys.map((key, i) => (
-            <Area 
-              key={key}
-              type="monotone" 
-              dataKey={key} 
-              stroke={colors[i % colors.length]} 
-              fillOpacity={1} 
-              fill={`url(#gradient-${widget.id}-${i})`} 
-              strokeWidth={2} 
-              strokeDasharray={widget.forecast ? "5 5" : undefined}
-              stackId={widget.stack ? "1" : undefined}
-            />
-          ))}
+          {dataKeys.map((key, i) => {
+            const isAnySelected = !!globalFilters[widget.categoryKey];
+            return (
+              <Area 
+                key={key}
+                type="monotone" 
+                dataKey={key} 
+                stroke={colors[i % colors.length]} 
+                fillOpacity={isAnySelected ? 0.2 : 1} 
+                fill={`url(#gradient-${widget.id}-${i})`} 
+                strokeWidth={2} 
+                strokeDasharray={widget.forecast ? "5 5" : undefined}
+                stackId={widget.stack ? "1" : undefined}
+              />
+            );
+          })}
         </AreaChart>
       );
     case 'bar':
     case 'stacked-bar':
       return (
-        <BarChart data={chartData}>
+        <BarChart data={chartData} onClick={handleClick}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff0a" />
           <XAxis dataKey={widget.categoryKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} dy={10} />
           <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
           <Tooltip cursor={{ fill: '#ffffff05' }} content={<CustomTooltip />} />
           {widget.type === 'stacked-bar' && <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />}
-          {dataKeys.map((key, i) => (
-            <Bar 
-              key={key}
-              dataKey={key} 
-              fill={colors[i % colors.length]} 
-              radius={widget.type === 'bar' ? [4, 4, 0, 0] : [0, 0, 0, 0]} 
-              stackId={widget.type === 'stacked-bar' ? "a" : undefined}
-              opacity={widget.forecast ? 0.6 : 1}
-            />
-          ))}
+          {dataKeys.map((key, i) => {
+            return (
+              <Bar 
+                key={key}
+                dataKey={key} 
+                stackId={widget.type === 'stacked-bar' ? "a" : undefined}
+              >
+                {chartData.map((entry, index) => {
+                  const isSelected = globalFilters[widget.categoryKey] === entry[widget.categoryKey];
+                  const hasOtherSelection = !!globalFilters[widget.categoryKey] && !isSelected;
+                  return (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={colors[i % colors.length]} 
+                      opacity={hasOtherSelection ? 0.3 : 1}
+                      radius={widget.type === 'bar' ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  );
+                })}
+              </Bar>
+            );
+          })}
         </BarChart>
       );
     case 'pie':
@@ -394,10 +514,20 @@ function renderChart(widget: WidgetConfig) {
             paddingAngle={5}
             dataKey={dataKeys[0]}
             nameKey={widget.categoryKey}
+            onClick={(data) => setGlobalFilter(widget.categoryKey, data.name)}
           >
-            {widget.data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke="rgba(255,255,255,0.05)" />
-            ))}
+            {widget.data.map((entry, index) => {
+              const isSelected = globalFilters[widget.categoryKey] === entry[widget.categoryKey];
+              return (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={colors[index % colors.length]} 
+                  stroke={isSelected ? "white" : "rgba(255,255,255,0.05)"}
+                  strokeWidth={isSelected ? 2 : 1}
+                  opacity={activeFilterCount > 0 && !isSelected && globalFilters[widget.categoryKey] ? 0.3 : 1}
+                />
+              );
+            })}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
         </PieChart>
@@ -405,7 +535,7 @@ function renderChart(widget: WidgetConfig) {
     case 'line':
     case 'multi-line':
       return (
-        <LineChart data={chartData}>
+        <LineChart data={chartData} onClick={handleClick}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff0a" />
           <XAxis dataKey={widget.categoryKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} dy={10} />
           <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
@@ -426,7 +556,7 @@ function renderChart(widget: WidgetConfig) {
       );
     case 'scatter':
       return (
-        <ScatterChart data={widget.data}>
+        <ScatterChart data={chartData} onClick={handleClick}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff0a" />
           <XAxis dataKey={widget.categoryKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} dy={10} />
           <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />

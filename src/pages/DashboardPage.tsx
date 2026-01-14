@@ -45,6 +45,7 @@ export default function DashboardPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [commentInput, setCommentInput] = useState('');
   const [isDevMode, setIsDevMode] = useState(false);
+  const [jsonConfig, setJsonConfig] = useState('');
 
   const currentDashboardId = savedDashboards.find(d => d.department === department)?.id || 'default';
 
@@ -53,6 +54,26 @@ export default function DashboardPage() {
       fetchComments(currentDashboardId);
     }
   }, [showComments, currentDashboardId]);
+
+  useEffect(() => {
+    if (isDevMode) {
+      setJsonConfig(JSON.stringify({ widgets }, null, 2));
+    }
+  }, [isDevMode, widgets]);
+
+  const handleApplyJson = () => {
+    try {
+      const parsed = JSON.parse(jsonConfig);
+      if (parsed.widgets && Array.isArray(parsed.widgets)) {
+        setWidgets(parsed.widgets);
+        toast.success('Configuration applied');
+      } else {
+        toast.error('Invalid configuration format. Must contain a "widgets" array.');
+      }
+    } catch (e) {
+      toast.error('Invalid JSON syntax');
+    }
+  };
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -152,6 +173,40 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-8">
+          <AnimatePresence>
+            {isDevMode && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="glass-card border-primary/20 bg-primary/5 p-6 rounded-2xl mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Layout className="w-5 h-5 text-primary" />
+                      <h3 className="font-bold">Dashboard Specification (WSL)</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setIsDevMode(false)}>Close</Button>
+                      <Button size="sm" onClick={handleApplyJson}>Apply Changes</Button>
+                    </div>
+                  </div>
+                  <textarea
+                    value={jsonConfig}
+                    onChange={(e) => setJsonConfig(e.target.value)}
+                    className="w-full h-64 bg-zinc-950/50 border border-white/10 rounded-xl p-4 font-mono text-xs text-emerald-400 focus:outline-none focus:border-primary/50 transition-colors"
+                    spellCheck={false}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-2">
+                    Directly modify the JSON representation of your dashboard layout and widget data. 
+                    Be careful: invalid JSON will prevent updates.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {currentView === 'overview' ? (
             <>
               <KPISection data={kpis} />
