@@ -48,6 +48,8 @@ interface DashboardContextType {
   suggestedStep: SuggestedStep | null;
   isWidgetBuilderOpen: boolean;
   setIsWidgetBuilderOpen: (open: boolean) => void;
+  showOnboarding: boolean;
+  setShowOnboarding: (open: boolean) => void;
   dashboardState: Record<string, any>;
   setDashboardState: (key: string, value: any) => void;
 }
@@ -64,6 +66,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
   const [suggestedStep, setSuggestedStep] = useState<SuggestedStep | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     const unsubscribe = blink.auth.onAuthStateChanged((state) => {
