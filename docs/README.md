@@ -3,6 +3,7 @@
 Welcome to the official documentation for the **Intinc Universal Dashboard Engine**. This platform empowers departments to generate high-fidelity, interactive dashboards from any dataset.
 
 ## Quick Links
+- [📋 Product Requirements Document](./PRD.md) - Comprehensive product specification and requirements.
 - [🚀 Strategic Roadmap](./ROADMAP.md) - Our 6-phase plan and completed features.
 - [💎 Best Practices](./BEST_PRACTICES.md) - Design and engineering standards.
 - [🏗️ Architecture](./architecture.md) - System architecture and design decisions.
