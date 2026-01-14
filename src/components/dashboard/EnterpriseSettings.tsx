@@ -26,6 +26,9 @@ import {
   RefreshCw, 
   Trash2, 
   Plus,
+  Link2,
+  Github,
+  GitBranch,
   Building2,
   Globe,
   Bell,
@@ -168,6 +171,24 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
     ));
   };
 
+  const handleConnectGithub = async () => {
+    try {
+      const response = await blink.functions.invoke('github-oauth', {
+        method: 'GET',
+        params: { action: 'authorize' }
+      });
+      
+      if (response && response.url) {
+        window.location.href = response.url;
+      } else {
+        toast.error('Failed to get GitHub authorization URL');
+      }
+    } catch (error) {
+      console.error('GitHub connect error:', error);
+      toast.error('Failed to connect to GitHub');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0 glass-card border-white/10">
@@ -196,6 +217,10 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
             <TabsTrigger value="webhooks" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
               <Webhook size={16} />
               Webhooks
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
+              <Link2 size={16} />
+              Integrations
             </TabsTrigger>
             <TabsTrigger value="security" className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
               <Shield size={16} />
@@ -465,6 +490,85 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
                           <Badge variant="outline" className="font-mono text-xs">
                             {event}
                           </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="integrations" className="m-0 space-y-6">
+                <Card className="bg-white/5 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Link2 size={18} />
+                      Connected Apps
+                    </CardTitle>
+                    <CardDescription>Connect third-party services to automate data ingestion.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { 
+                          name: 'GitHub', 
+                          icon: Github, 
+                          description: 'Track repository metrics and developer activity.',
+                          connected: false,
+                          color: '#24292e'
+                        },
+                        { 
+                          name: 'HubSpot', 
+                          icon: GitBranch, 
+                          description: 'Sync sales pipelines and customer engagement.',
+                          connected: false,
+                          color: '#ff7a59'
+                        },
+                        { 
+                          name: 'Figma', 
+                          icon: Globe, 
+                          description: 'Import design system metrics and team activity.',
+                          connected: false,
+                          color: '#f24e1e'
+                        },
+                        { 
+                          name: 'Freshservice', 
+                          icon: Database, 
+                          description: 'Analyze IT service desk performance and tickets.',
+                          connected: false,
+                          color: '#00a1e0'
+                        }
+                      ].map((app) => (
+                        <div 
+                          key={app.name}
+                          className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-4 hover:border-white/20 transition-colors"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${app.color}20` }}>
+                              <app.icon size={20} style={{ color: app.color }} />
+                            </div>
+                            <Badge variant={app.connected ? "default" : "secondary"}>
+                              {app.connected ? "Connected" : "Disconnected"}
+                            </Badge>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">{app.name}</h4>
+                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                              {app.description}
+                            </p>
+                          </div>
+                          <Button 
+                            variant={app.connected ? "outline" : "default"} 
+                            className="w-full mt-2"
+                            onClick={() => {
+                              if (app.name === 'GitHub') {
+                                handleConnectGithub();
+                              } else {
+                                toast.error(`${app.name} integration coming soon!`);
+                              }
+                            }}
+                          >
+                            {app.connected ? "Configure" : "Connect"}
+                          </Button>
                         </div>
                       ))}
                     </div>

@@ -6,7 +6,7 @@ import AIInsight from '../components/dashboard/AIInsight';
 import LiveSimulator from '../components/dashboard/LiveSimulator';
 import TemplateGallery from '../components/dashboard/TemplateGallery';
 import VisualWidgetBuilder from '../components/dashboard/VisualWidgetBuilder';
-import CSVUploader from '../components/dashboard/CSVUploader';
+import UniversalIngestor from '../components/dashboard/UniversalIngestor';
 import { useDashboard } from '../hooks/use-dashboard';
 import { Plus, Filter, Calendar, Layout, Save, Download, Share2, MessageSquare, Trash2, Database } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -326,7 +326,7 @@ export default function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-4xl mx-auto"
             >
-              <CSVUploader />
+              <UniversalIngestor />
             </motion.div>
           )}
         </div>
