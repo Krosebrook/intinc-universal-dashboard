@@ -1,5 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
 import { useDashboard } from '../../../hooks/use-dashboard';
 import { WidgetConfig } from '../../../types/dashboard';
 import { WidgetCard } from './WidgetCard';
@@ -30,6 +45,17 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
   const [widgetJson, setWidgetJson] = useState('');
   const [widgetComment, setWidgetComment] = useState('');
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const currentDashboardId = savedDashboards.find(d => d.department === department)?.id || 'default';
 
   useEffect(() => {
@@ -37,6 +63,33 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
       fetchComments(currentDashboardId, selectedWidget.id);
     }
   }, [selectedWidget, currentDashboardId, fetchComments]);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = widgets.findIndex((w) => w.id === active.id);
+      const newIndex = widgets.findIndex((w) => w.id === over.id);
+
+      if (onUpdate) {
+        onUpdate(arrayMove(widgets, oldIndex, newIndex));
+      }
+    }
+  }, [widgets, onUpdate]);
+
+  const handleResize = useCallback((id: string, span: number) => {
+    if (onUpdate) {
+      onUpdate(widgets.map(w => w.id === id ? { ...w, gridSpan: span } : w));
+      toast.success('Widget resized');
+    }
+  }, [onUpdate, widgets]);
+
+  const handleDuplicate = useCallback((newWidget: WidgetConfig) => {
+    if (onUpdate) {
+      onUpdate([...widgets, newWidget]);
+      toast.success('Widget duplicated');
+    }
+  }, [onUpdate, widgets]);
 
   const handleAddWidgetComment = useCallback(async (content: string) => {
     if (!content.trim() || !selectedWidget) return;
@@ -85,20 +138,30 @@ export default function WidgetGrid({ widgets, onUpdate }: WidgetGridProps) {
         onRemove={setGlobalFilter} 
       />
 
-      <div className="grid grid-cols-12 gap-6">
-        {widgets.map((widget, index) => (
-          <WidgetCard 
-            key={widget.id}
-            widget={widget}
-            index={index}
-            globalFilters={globalFilters}
-            setGlobalFilter={setGlobalFilter}
-            onSelect={setSelectedWidget}
-            onEdit={setEditingWidget}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-12 gap-6">
+            {widgets.map((widget, index) => (
+              <WidgetCard 
+                key={widget.id}
+                widget={widget}
+                index={index}
+                globalFilters={globalFilters}
+                setGlobalFilter={setGlobalFilter}
+                onSelect={setSelectedWidget}
+                onEdit={setEditingWidget}
+                onDelete={handleDelete}
+                onResize={handleResize}
+                onDuplicate={handleDuplicate}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       <WidgetDrilldown 
         widget={selectedWidget}

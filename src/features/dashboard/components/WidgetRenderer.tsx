@@ -162,6 +162,7 @@ export function WidgetRenderer({ widget, globalFilters, setGlobalFilter }: Widge
             <XAxis dataKey={widget.categoryKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} dy={10} />
             <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
             <Tooltip content={<CustomTooltip />} />
+            {widget.type === 'multi-line' && <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />}
             {dataKeys.map((key, i) => (
               <Line 
                 key={key}
@@ -171,10 +172,30 @@ export function WidgetRenderer({ widget, globalFilters, setGlobalFilter }: Widge
                 strokeDasharray={widget.forecast ? "5 5" : undefined}
                 dot={{ r: 4, fill: colors[i % colors.length], strokeWidth: 2, stroke: '#09090b' }} 
                 activeDot={{ r: 6, strokeWidth: 0 }} 
+                name={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
               />
             ))}
           </LineChart>
         );
+      case 'scatter': {
+        const xKey = dataKeys[0];
+        const yKey = dataKeys[1] || dataKeys[0];
+        const zKey = dataKeys[2];
+        return (
+          <ScatterChart onClick={handleClick}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff0a" />
+            <XAxis type="number" dataKey={xKey} name={xKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+            <YAxis type="number" dataKey={yKey} name={yKey} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+            {zKey && <ZAxis type="number" dataKey={zKey} range={[64, 144]} name={zKey} />}
+            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+            <Scatter name={widget.title} data={chartData} fill={colors[0]}>
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+              ))}
+            </Scatter>
+          </ScatterChart>
+        );
+      }
       case 'gauge': {
         const value = widget.data[0][dataKeys[0]];
         const goal = widget.goal || 100;
