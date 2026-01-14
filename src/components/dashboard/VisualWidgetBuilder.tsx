@@ -75,6 +75,10 @@ export default function VisualWidgetBuilder({ open, onOpenChange, onAdd }: Visua
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl glass-card border-white/10 p-0 overflow-hidden">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Visual Widget Builder</DialogTitle>
+          <DialogDescription>Create and configure a new dashboard widget</DialogDescription>
+        </DialogHeader>
         <div className="flex h-[600px]">
           {/* Sidebar */}
           <div className="w-64 border-r border-white/10 bg-white/5 p-4 space-y-2">
