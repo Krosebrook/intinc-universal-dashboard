@@ -12,6 +12,7 @@ A production-ready, enterprise-grade universal dashboard platform built with Rea
 - 🎨 **Visual Widget Builder** - Drag-and-drop interface for creating custom widgets
 - 📈 **Advanced Charts** - Line, bar, area, pie, stacked bar, and composed charts
 - 🤖 **AI-Powered Insights** - Automated analysis and recommendations
+- 📝 **PRD Generator** - AI-powered Product Requirements Document generation
 - 💾 **CSV Import/Export** - Easy data import and PDF export
 - 🔄 **Real-Time Collaboration** - Live updates and team commenting
 - 🏢 **Workspace Management** - Multi-tenant architecture with RBAC
@@ -152,6 +153,7 @@ docker run -p 80:80 intinc-dashboard
 - [Testing](./docs/TESTING.md) - Testing strategy and guidelines
 - [Deployment](./docs/DEPLOYMENT.md) - Deployment guide
 - [API](./docs/API.md) - API documentation
+- [PRD Generator](./docs/PRD_GENERATOR.md) - AI-powered PRD generation guide
 - [Widget SDK](./docs/WIDGET_SDK.md) - Custom widget development guide
 - [Roadmap](./docs/ROADMAP.md) - Product roadmap and completed features
 - [Contributing](./CONTRIBUTING.md) - Contribution guidelines
