@@ -161,6 +161,13 @@ export default function Sidebar({ onOpenSettings, className }: { onOpenSettings?
           onClick={() => setCurrentView('explorer')}
         />
         <NavItem 
+          id="prd-generator-tab"
+          icon={<FileText size={20} />} 
+          label="PRD Generator" 
+          active={currentView === 'prd-generator'}
+          onClick={() => setCurrentView('prd-generator')}
+        />
+        <NavItem 
           icon={<Share2 size={20} />} 
           label="Integrations" 
           onClick={onOpenSettings}

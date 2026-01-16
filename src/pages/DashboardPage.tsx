@@ -7,6 +7,7 @@ import LiveSimulator from '../features/dashboard/components/LiveSimulator';
 import TemplateGallery from '../features/dashboard/components/TemplateGallery';
 import VisualWidgetBuilder from '../features/dashboard/components/VisualWidgetBuilder';
 import UniversalIngestor from '../features/dashboard/components/UniversalIngestor';
+import PRDGenerator from '../features/prd-generator/components/PRDGenerator';
 import { SmartAssistant } from '../features/dashboard/components/SmartAssistant';
 import { useDashboard } from '../hooks/use-dashboard';
 import { useExport } from '../hooks/use-export';
@@ -227,6 +228,13 @@ export default function DashboardPage() {
                 )}
               </div>
             </>
+          ) : currentView === 'prd-generator' ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <PRDGenerator />
+            </motion.div>
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
