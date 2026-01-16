@@ -8,7 +8,6 @@ import { blink } from '../../../lib/blink';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
-import DOMPurify from 'dompurify';
 import { aiRateLimiter } from '../../../lib/rate-limiting/api-limiter';
 import type { BlinkUser } from '@blinkdotnew/sdk';
 
@@ -183,11 +182,15 @@ export default function PRDGenerator() {
 
   const handleDownload = () => {
     try {
+      // Generate a descriptive filename based on timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `PRD-${timestamp}.md`;
+      
       const blob = new Blob([generatedPRD], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'PRD.md';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -224,14 +227,20 @@ export default function PRDGenerator() {
           </div>
         );
       }
-      // Bold text
+      // Bold text - parse ** markers more carefully
       if (line.includes('**')) {
+        // Split by ** and track whether we're inside bold text
         const parts = line.split('**');
-        return (
-          <p key={i} className="text-sm text-muted-foreground mb-2 leading-relaxed">
-            {parts.map((part, j) => j % 2 === 0 ? part : <strong key={j} className="font-bold text-foreground">{part}</strong>)}
-          </p>
-        );
+        // Only process if we have matched pairs
+        if (parts.length > 1) {
+          return (
+            <p key={i} className="text-sm text-muted-foreground mb-2 leading-relaxed">
+              {parts.map((part, j) => 
+                j > 0 && j % 2 === 1 ? <strong key={j} className="font-bold text-foreground">{part}</strong> : part
+              )}
+            </p>
+          );
+        }
       }
       // Regular text
       if (line.trim()) {
