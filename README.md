@@ -148,6 +148,11 @@ docker run -p 80:80 intinc-dashboard
 
 ## 📚 Documentation
 
+### Getting Started
+- **[Getting Started Guide](./docs/GETTING_STARTED.md)** - Step-by-step tutorial for new users
+- **[Features Overview](./docs/FEATURES.md)** - Complete feature documentation
+- [PRD](./docs/PRD.md) - Product Requirements Document
+
 ### Core Documentation
 - [Architecture](./docs/architecture.md) - System architecture and design decisions
 - [Security](./docs/security.md) - Security best practices and guidelines
@@ -170,6 +175,7 @@ docker run -p 80:80 intinc-dashboard
 
 ### Project Management
 - [Roadmap](./docs/ROADMAP.md) - Product roadmap and completed features
+- **[Next 4 Features](./docs/NEXT_FEATURES.md)** - Detailed planning for upcoming features
 - [Contributing](./CONTRIBUTING.md) - Contribution guidelines
 
 ## 🔒 Security
