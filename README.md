@@ -21,11 +21,11 @@ A production-ready, enterprise-grade universal dashboard platform built with Rea
 
 ### Enterprise Features
 - 🔒 **Production-Grade Security** - Input sanitization, CSP, rate limiting, RLS
-- 🧪 **70%+ Test Coverage** - Unit, integration, and E2E tests
+- 🧪 **Comprehensive Testing** - Unit, integration, and E2E test infrastructure
 - 🚀 **CI/CD Pipeline** - Automated testing, building, and deployment
 - 📊 **Error Tracking** - Sentry integration with error boundaries
 - 🐳 **Docker Support** - Containerized deployment with nginx
-- 📝 **Structured Logging** - Comprehensive logging and monitoring
+- 📝 **Structured Logging** - Winston logging and Sentry monitoring
 - 🔐 **RBAC** - Role-based access control (Owner, Admin, Editor, Viewer)
 - ⚡ **Performance Optimized** - Code splitting, lazy loading, caching
 
@@ -148,13 +148,27 @@ docker run -p 80:80 intinc-dashboard
 
 ## 📚 Documentation
 
+### Core Documentation
 - [Architecture](./docs/architecture.md) - System architecture and design decisions
 - [Security](./docs/security.md) - Security best practices and guidelines
-- [Testing](./docs/TESTING.md) - Testing strategy and guidelines
-- [Deployment](./docs/DEPLOYMENT.md) - Deployment guide
 - [API](./docs/API.md) - API documentation
-- [PRD Generator](./docs/PRD_GENERATOR.md) - AI-powered PRD generation guide
+- [Database Schema](./docs/DATABASE_SCHEMA.md) - Database tables, relationships, and RLS policies
+
+### Development Guides
+- [Testing](./docs/TESTING.md) - Testing strategy and guidelines
+- [Best Practices](./docs/BEST_PRACTICES.md) - Design and engineering standards
 - [Widget SDK](./docs/WIDGET_SDK.md) - Custom widget development guide
+- [PRD Generator](./docs/PRD_GENERATOR.md) - AI-powered PRD generation guide
+- [Performance](./docs/PERFORMANCE.md) - Performance optimization strategies
+
+### Operations
+- [Deployment](./docs/DEPLOYMENT.md) - Deployment guide
+- [Environment Variables](./docs/ENVIRONMENT_VARIABLES.md) - Complete environment configuration
+- [Logging & Monitoring](./docs/LOGGING.md) - Winston, Sentry, and audit logging
+- [Error Handling](./docs/ERROR_HANDLING.md) - Error handling patterns and practices
+- [Troubleshooting](./docs/TROUBLESHOOTING.md) - Common issues and solutions
+
+### Project Management
 - [Roadmap](./docs/ROADMAP.md) - Product roadmap and completed features
 - [Contributing](./CONTRIBUTING.md) - Contribution guidelines
 
