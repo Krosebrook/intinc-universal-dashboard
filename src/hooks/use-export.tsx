@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { exportToPdf, ExportOptions } from '../lib/export';
 import { blink } from '../lib/blink';
@@ -62,7 +63,7 @@ export function useExport() {
       
       return true;
     } catch (error) {
-      console.error('Export Hook Error:', error);
+      logger.error('Export Hook Error:', error as Error);
       toast.error('Failed to generate report', { 
         id: toastId,
         description: error instanceof Error ? error.message : 'An unexpected error occurred during export.'

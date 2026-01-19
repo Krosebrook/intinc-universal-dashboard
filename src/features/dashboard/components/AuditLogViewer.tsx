@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../../lib/logger';
 import { blink } from '../../../lib/blink';
 import { 
   Table, 
@@ -54,7 +55,7 @@ export default function AuditLogViewer() {
       });
       setLogs(data as any || []);
     } catch (error) {
-      console.error('Failed to fetch audit logs:', error);
+      logger.error('Failed to fetch audit logs:', error as Error);
     } finally {
       setLoading(false);
     }

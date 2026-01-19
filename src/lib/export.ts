@@ -1,5 +1,6 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { logger } from './logger';
 
 export interface ExportOptions {
   filename?: string;
@@ -54,7 +55,7 @@ export async function exportToPdf(
     
     return true;
   } catch (error) {
-    console.error('PDF Export Utility Error:', error);
+    logger.error('PDF Export Utility Error:', error as Error);
     throw error;
   }
 }

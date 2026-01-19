@@ -6,6 +6,7 @@
  */
 
 import DOMPurify from 'dompurify';
+import { logger } from '@/lib/logger';
 
 /**
  * Sanitize widget configuration to prevent XSS and injection attacks
@@ -157,7 +158,7 @@ export function createWidgetSandbox() {
 
         return fn(data, sandbox);
       } catch (error) {
-        console.error('Widget transform error:', error);
+        logger.error('Widget transform error:', error as Error);
         throw new Error('Failed to execute widget transformation');
       }
     },
@@ -304,8 +305,8 @@ export function sanitizeWidgetError(error: any): {
  */
 export const widgetCSP = {
   defaultSrc: ["'self'"],
-  scriptSrc: ["'self'", "'unsafe-inline'"],
-  styleSrc: ["'self'", "'unsafe-inline'"],
+  scriptSrc: ["'self'"],
+  styleSrc: ["'self'"],
   imgSrc: ["'self'", 'data:', 'https:'],
   connectSrc: ["'self'"],
   fontSrc: ["'self'", 'data:'],

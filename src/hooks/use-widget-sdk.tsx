@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { logger } from '@/lib/logger';
 import { useWidgetState, useWidgetInteraction } from './use-widget-state';
 import type { WidgetConfig } from '../types/dashboard';
 
@@ -233,7 +234,7 @@ export function useWidgetLocalState<T>(
       setState(value);
       localStorage.setItem(storageKey, JSON.stringify(value));
     } catch (error) {
-      console.error('Failed to save widget state:', error);
+      logger.error('Failed to save widget state:', error as Error);
     }
   }, [storageKey]);
 

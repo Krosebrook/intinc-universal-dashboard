@@ -1,4 +1,5 @@
 import { useState, createContext, useContext, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { blink } from '../lib/blink';
 import { toast } from 'sonner';
 import type { BlinkUser } from '@blinkdotnew/sdk';
@@ -177,7 +178,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         fetchComments(id);
       }
     } catch (error) {
-      console.error('Error loading dashboard:', error);
+      logger.error('Error loading dashboard:', error as Error);
       toast.error('Failed to load dashboard');
     }
   };

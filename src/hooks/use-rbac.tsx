@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { blink } from '../lib/blink';
 import type { BlinkUser } from '@blinkdotnew/sdk';
 import { Permission, Role, ROLE_DEFINITIONS, WorkspaceMember } from '../types/rbac';
@@ -63,7 +64,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
             toast.success(`You've joined ${pendingInvites.length} new workspace(s)!`);
           }
         } catch (error) {
-          console.error('Failed to claim invitations:', error);
+          logger.error('Failed to claim invitations:', error as Error);
         }
 
         // Determine role from user metadata or default to 'editor' for authenticated users
@@ -121,7 +122,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
         setPermissions(ROLE_DEFINITIONS[member.role as Role]?.permissions || []);
       }
     } catch (error) {
-      console.error('Failed to fetch workspace members:', error);
+      logger.error('Failed to fetch workspace members:', error as Error);
     }
   };
 
@@ -153,7 +154,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
       toast.success(`Invitation sent to ${email}`);
       await fetchWorkspaceMembers(workspaceId);
     } catch (error) {
-      console.error('Failed to invite member:', error);
+      logger.error('Failed to invite member:', error as Error);
       toast.error('Failed to send invitation');
     }
   };
@@ -181,7 +182,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
 
       toast.success('Member role updated');
     } catch (error) {
-      console.error('Failed to update member role:', error);
+      logger.error('Failed to update member role:', error as Error);
       toast.error('Failed to update role');
     }
   };
@@ -206,7 +207,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
 
       toast.success('Member removed from workspace');
     } catch (error) {
-      console.error('Failed to remove member:', error);
+      logger.error('Failed to remove member:', error as Error);
       toast.error('Failed to remove member');
     }
   };

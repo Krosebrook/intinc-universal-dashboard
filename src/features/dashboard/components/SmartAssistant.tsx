@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '../../../lib/logger';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, X, MessageSquare, Loader2, Send } from 'lucide-react';
 import { useDashboard } from '../../../hooks/use-dashboard';
@@ -11,7 +12,7 @@ import { WidgetConfig } from '../../../types/dashboard';
 import { FeatureSpotlight } from './FeatureSpotlight';
 
 export function SmartAssistant() {
-  const { suggestedStep, setWidgets, department, kpis } = useDashboard();
+  const { suggestedStep, setWidgets, department, kpis, widgets } = useDashboard();
   const [isVisible, setIsVisible] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [prompt, setPrompt] = useState('');
@@ -109,7 +110,7 @@ export function SmartAssistant() {
       setPrompt('');
       setIsExpanded(false);
     } catch (error) {
-      console.error('AI Assistant error:', error);
+      logger.error('AI Assistant error:', error as Error);
       toast.error('AI assistant had trouble with that request.', { id: toastId });
     } finally {
       setIsGenerating(false);

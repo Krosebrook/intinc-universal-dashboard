@@ -7,6 +7,7 @@
 
 import { lazy, ComponentType, LazyExoticComponent, Suspense, useState, useEffect } from 'react';
 import * as React from 'react';
+import { logger } from '@/lib/logger';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface WidgetManifest {
@@ -105,7 +106,7 @@ export class WidgetLoader {
 
       return Component;
     } catch (error) {
-      console.error('Widget import error:', error);
+      logger.error('Widget import error:', error as Error);
       throw error;
     }
   }
@@ -219,7 +220,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Widget loading error:', error, errorInfo);
+    logger.error('Widget loading error:', error, { errorInfo });
   }
 
   render() {

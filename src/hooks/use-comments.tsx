@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { logger } from '@/lib/logger';
 import { blink } from '../lib/blink';
 import { toast } from 'sonner';
 import { Comment } from '../types/dashboard';
@@ -15,7 +16,7 @@ export function useComments() {
       const results = await blink.db.comments.list({ where });
       setComments(results || []);
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      logger.error('Error fetching comments:', error as Error);
     }
   };
 
@@ -33,7 +34,7 @@ export function useComments() {
       fetchComments(dashboardId);
       toast.success('Comment added');
     } catch (error) {
-      console.error('Error adding comment:', error);
+      logger.error('Error adding comment:', error as Error);
       toast.error('Failed to add comment');
     }
   };

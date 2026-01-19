@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { useDashboard } from './use-dashboard';
 import { useRBAC } from './use-rbac';
 
@@ -80,7 +81,7 @@ export function useWidgetApi(widgetId: string) {
     emitEvent: (type: string, payload: any) => {
       logAction('widget_event_emitted', 'widget', widgetId, { type, payload });
       // In a real implementation, this could use a PubSub or shared context
-      console.log(`[Widget ${widgetId}] Event: ${type}`, payload);
+      logger.info(`[Widget ${widgetId}] Event: ${type}`, { payload });
     }
   };
 }

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { logger } from '../../../lib/logger';
 import { Button } from '../../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
 import { FileUp, Table, Check, Loader2, Sparkles, FileText, FileSpreadsheet, LayoutGrid, BarChart3, PieChart, Info } from 'lucide-react';
@@ -47,7 +48,7 @@ export default function UniversalIngestor() {
       // Now use AI to generate recommendations
       await generateRecommendationsFromAI(text, file.name);
     } catch (error) {
-      console.error('File processing error:', error);
+      logger.error('File processing error:', error as Error);
       toast.error('Failed to process file. Please try again.');
     } finally {
       setIsProcessing(false);
@@ -121,7 +122,7 @@ export default function UniversalIngestor() {
       
       toast.success('AI recommendations ready!');
     } catch (error) {
-      console.error('AI recommendation error:', error);
+      logger.error('AI recommendation error:', error as Error);
       toast.error('AI failed to generate recommendations. Try another file.');
     } finally {
       setIsProcessing(false);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { blink } from '../lib/blink';
 import { toast } from 'sonner';
 import { Workspace } from '../types/dashboard';
@@ -12,7 +13,7 @@ export function useWorkspaces(currentUser: BlinkUser | null) {
       const results = await blink.db.workspaces.list();
       setWorkspaces(results || []);
     } catch (error) {
-      console.error('Error fetching workspaces:', error);
+      logger.error('Error fetching workspaces:', error as Error);
     }
   };
 
@@ -29,7 +30,7 @@ export function useWorkspaces(currentUser: BlinkUser | null) {
       fetchWorkspaces();
       toast.success('Workspace created');
     } catch (error) {
-      console.error('Error creating workspace:', error);
+      logger.error('Error creating workspace:', error as Error);
       toast.error('Failed to create workspace');
     }
   };

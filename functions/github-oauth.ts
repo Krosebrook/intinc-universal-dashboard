@@ -6,9 +6,45 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, content-type",
 };
 
+// Simple in-memory rate limiter (per-instance)
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+const RATE_LIMIT = 20; // 20 requests
+const WINDOW_MS = 60000; // 1 minute
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const limitInfo = rateLimitMap.get(ip) || { count: 0, lastReset: now };
+
+  if (now - limitInfo.lastReset > WINDOW_MS) {
+    limitInfo.count = 1;
+    limitInfo.lastReset = now;
+    rateLimitMap.set(ip, limitInfo);
+    return false;
+  }
+
+  if (limitInfo.count >= RATE_LIMIT) {
+    return true;
+  }
+
+  limitInfo.count++;
+  rateLimitMap.set(ip, limitInfo);
+  return false;
+}
+
 async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // Get client IP for rate limiting
+  // Note: In Deno Deploy, the IP is often in a specific header or available via req info
+  const clientIp = req.headers.get("x-forwarded-for") || "unknown";
+
+  if (isRateLimited(clientIp)) {
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const url = new URL(req.url);

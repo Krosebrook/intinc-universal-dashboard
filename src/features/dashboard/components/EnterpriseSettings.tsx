@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../../lib/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
@@ -97,7 +98,7 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
         });
       }
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      logger.error('Failed to load settings:', error as Error);
     }
   };
 
@@ -129,7 +130,7 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
 
       toast.success('Settings saved successfully');
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      logger.error('Failed to save settings:', error as Error);
       toast.error('Failed to save settings');
     } finally {
       setIsLoading(false);
@@ -187,7 +188,7 @@ export default function EnterpriseSettings({ open, onOpenChange }: EnterpriseSet
         toast.error('Failed to get GitHub authorization URL');
       }
     } catch (error) {
-      console.error('GitHub connect error:', error);
+      logger.error('GitHub connect error:', error as Error);
       toast.error('Failed to connect to GitHub');
     }
   };

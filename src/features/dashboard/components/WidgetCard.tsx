@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '../../../lib/logger';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -98,7 +99,7 @@ export function WidgetCard({
         link.click();
         toast.success('Widget exported as image');
       } catch (error) {
-        console.error('Export failed:', error);
+        logger.error('Export failed:', error as Error);
         toast.error('Failed to export widget image');
       }
     }

@@ -4,6 +4,7 @@
  */
 
 import { blink } from './blink';
+import { logger } from './logger';
 
 // Feature flags and configuration
 export const AppConfig = {
@@ -114,12 +115,12 @@ export const isFeatureEnabled = (feature: string): boolean => {
 
 // Initialize app features (called once on app start)
 export async function initializeAppFeatures(): Promise<void> {
-  console.log('[App] Initializing features...');
+  logger.info('[App] Initializing features...');
   
   // Features are initialized through their respective providers/hooks
   // This function serves as a central point for any global initialization
   
-  console.log('[App] Features initialized successfully');
+  logger.info('[App] Features initialized successfully');
 }
 
 export default AppConfig;

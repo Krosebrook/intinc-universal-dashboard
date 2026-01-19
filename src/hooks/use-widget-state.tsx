@@ -4,6 +4,7 @@
  */
 
 import { useState, createContext, useContext, useCallback, useRef, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { 
   GlobalDashboardState, 
   WidgetFilter, 
@@ -111,7 +112,7 @@ export function WidgetStateProvider({ children }: { children: React.ReactNode })
       try {
         callback(fullInteraction);
       } catch (error) {
-        console.error('Widget subscriber error:', error);
+        logger.error('Widget subscriber error:', error as Error);
       }
     });
   }, []);

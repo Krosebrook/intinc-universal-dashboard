@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '../../../lib/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -58,7 +59,7 @@ export default function TemplateGallery({ open, onOpenChange }: TemplateGalleryP
         setSuggestedTemplateId(match);
       }
     } catch (error) {
-      console.error('AI Search failed:', error);
+      logger.error('AI Search failed:', error as Error);
     } finally {
       setIsSearching(false);
     }

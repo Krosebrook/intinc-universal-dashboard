@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { blink } from '../lib/blink';
 import { toast } from 'sonner';
 import { SavedDashboard, Department, WidgetConfig } from '../types/dashboard';
@@ -22,7 +23,7 @@ export function useDashboardsCRUD(currentUser: BlinkUser | null) {
       if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('Failed to fetch')) {
         setSavedDashboards([]);
       } else {
-        console.error('Error fetching dashboards:', error);
+        logger.error('Error fetching dashboards:', error as Error);
       }
     }
   };
@@ -73,7 +74,7 @@ export function useDashboardsCRUD(currentUser: BlinkUser | null) {
       toast.success('Dashboard saved successfully');
       fetchSavedDashboards();
     } catch (error) {
-      console.error('Error saving dashboard:', error);
+      logger.error('Error saving dashboard:', error as Error);
       toast.error('Failed to save dashboard');
     } finally {
       setIsLoading(false);
@@ -98,7 +99,7 @@ export function useDashboardsCRUD(currentUser: BlinkUser | null) {
       toast.success('Dashboard deleted');
       fetchSavedDashboards();
     } catch (error) {
-      console.error('Error deleting dashboard:', error);
+      logger.error('Error deleting dashboard:', error as Error);
       toast.error('Failed to delete dashboard');
     } finally {
       setIsLoading(false);

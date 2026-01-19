@@ -4,6 +4,7 @@
  */
 
 import { blink } from '../blink';
+import { logger } from '../logger';
 import type { BlinkUser } from '@blinkdotnew/sdk';
 
 export interface AuditEvent {
@@ -21,7 +22,7 @@ export async function logAuditEvent(
   event: AuditEvent
 ): Promise<void> {
   if (!user) {
-    console.warn('Audit Log: Attempted to log event without user context', event);
+    logger.warn('Audit Log: Attempted to log event without user context', { event });
     return;
   }
 
@@ -38,7 +39,7 @@ export async function logAuditEvent(
   } catch (error) {
     // We don't want audit log failures to break the main application flow,
     // but we should log the failure for debugging.
-    console.error('Audit Log: Failed to record event', { event, error });
+    logger.error('Audit Log: Failed to record event', error as Error, { event });
   }
 }
 
