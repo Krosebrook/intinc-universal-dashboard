@@ -3,16 +3,31 @@
 Welcome to the official documentation for the **Intinc Universal Dashboard Engine**. This platform empowers departments to generate high-fidelity, interactive dashboards from any dataset.
 
 ## Quick Links
-- [📋 Product Requirements Document](./PRD.md) - Comprehensive product specification and requirements.
-- [🚀 Strategic Roadmap](./ROADMAP.md) - Our 6-phase plan and completed features.
-- [💎 Best Practices](./BEST_PRACTICES.md) - Design and engineering standards.
-- [🏗️ Architecture](./architecture.md) - System architecture and design decisions.
-- [🔒 Security](./security.md) - Security best practices and guidelines.
-- [🧪 Testing](./TESTING.md) - Testing strategy and guidelines.
-- [📦 Deployment](./DEPLOYMENT.md) - Deployment guide.
-- [🔌 API Documentation](./API.md) - API reference and examples.
-- [🎨 Widget SDK](./WIDGET_SDK.md) - Custom widget development guide.
-- [📝 Changelog](./changelog.md) - Version history and updates.
+
+### Core Documentation
+- [📋 Product Requirements Document](./PRD.md) - Comprehensive product specification and requirements
+- [🚀 Strategic Roadmap](./ROADMAP.md) - Our 6-phase plan and completed features
+- [💎 Best Practices](./BEST_PRACTICES.md) - Design and engineering standards
+- [🏗️ Architecture](./architecture.md) - System architecture and design decisions
+- [📝 Changelog](./changelog.md) - Version history and updates
+
+### Development Guides
+- [🧪 Testing](./TESTING.md) - Testing strategy and guidelines
+- [🔌 API Documentation](./API.md) - API reference and examples
+- [🎨 Widget SDK](./WIDGET_SDK.md) - Custom widget development guide
+- [🗄️ Database Schema](./DATABASE_SCHEMA.md) - Database tables, relationships, and RLS policies
+- [⚡ Performance Optimization](./PERFORMANCE.md) - Performance best practices and monitoring
+- [📝 PRD Generator](./PRD_GENERATOR.md) - AI-powered PRD generation guide
+
+### Operations & Deployment
+- [📦 Deployment](./DEPLOYMENT.md) - Deployment guide for production
+- [🔧 Environment Variables](./ENVIRONMENT_VARIABLES.md) - Complete environment configuration guide
+- [🔒 Security](./security.md) - Security best practices and guidelines
+
+### Troubleshooting & Support
+- [🐛 Troubleshooting](./TROUBLESHOOTING.md) - Common issues and solutions
+- [🚨 Error Handling](./ERROR_HANDLING.md) - Error handling patterns and best practices
+- [📊 Logging & Monitoring](./LOGGING.md) - Winston, Sentry, and audit logging
 
 ## Project Overview
 The Universal Dashboard Engine is built with a "Modern Enterprise" aesthetic, leveraging high-fidelity glassmorphism, AI-powered insights, and seamless data portability.
