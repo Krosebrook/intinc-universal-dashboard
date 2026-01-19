@@ -113,7 +113,7 @@ class Logger {
    * @param url - Request URL
    * @param data - Request payload
    */
-  apiRequest(method: string, url: string, data?: any): void {
+  apiRequest(method: string, url: string, data?: Record<string, unknown> | unknown[]): void {
     this.debug(`API Request: ${method} ${url}`, { data });
   }
 
@@ -124,7 +124,7 @@ class Logger {
    * @param status - HTTP status code
    * @param data - Response data
    */
-  apiResponse(method: string, url: string, status: number, data?: any): void {
+  apiResponse(method: string, url: string, status: number, data?: Record<string, unknown> | unknown[]): void {
     this.debug(`API Response: ${method} ${url} [${status}]`, { data });
   }
 

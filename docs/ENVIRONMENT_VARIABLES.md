@@ -65,7 +65,7 @@ VITE_BLINK_PROJECT_ID=a1b2c3d4-e5f6-7890-abcd-ef1234567890
 
 **Example:**
 ```env
-VITE_BLINK_PUBLISHABLE_KEY=pk_live_1234567890abcdefghijklmnopqrstuvwxyz
+VITE_BLINK_PUBLISHABLE_KEY=pk_live_example_key_replace_with_your_actual_key
 ```
 
 **Where to get it:**

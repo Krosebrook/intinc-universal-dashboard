@@ -41,9 +41,16 @@ This guide helps you diagnose and resolve common issues in the Intinc Universal 
    npm install
    ```
 
-4. **Check for permission issues:**
+4. **Check for permission issues (use a node version manager):**
    ```bash
-   sudo chown -R $(whoami) ~/.npm
+   # Recommended: Use nvm or fnm to avoid permission issues
+   # Install nvm: https://github.com/nvm-sh/nvm
+   
+   # Or configure npm to use a different directory:
+   mkdir ~/.npm-global
+   npm config set prefix ~/.npm-global
+   # Add to ~/.profile or ~/.bashrc:
+   # export PATH=~/.npm-global/bin:$PATH
    ```
 
 ### Development Server Won't Start

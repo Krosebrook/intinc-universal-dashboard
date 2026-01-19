@@ -15,9 +15,9 @@ export function renderWithProviders(
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>
 ) {
-  const Wrapper = ({ children }: { children: React.ReactNode }) => {
-    return React.createElement(BrowserRouter, null, children);
-  };
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return <BrowserRouter>{children}</BrowserRouter>;
+  }
 
   return render(ui, { wrapper: Wrapper, ...options });
 }
