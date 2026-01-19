@@ -3,6 +3,7 @@
  * Common utilities for writing tests
  */
 
+import React from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { ReactElement } from 'react';
 import { BrowserRouter } from 'react-router-dom';
@@ -14,9 +15,9 @@ export function renderWithProviders(
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>
 ) {
-  function Wrapper({ children }: { children: React.ReactNode }) {
-    return <BrowserRouter>{children}</BrowserRouter>;
-  }
+  const Wrapper = ({ children }: { children: React.ReactNode }) => {
+    return React.createElement(BrowserRouter, null, children);
+  };
 
   return render(ui, { wrapper: Wrapper, ...options });
 }
