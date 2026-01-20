@@ -1,0 +1,337 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches:
+      - development
+      - main
+      - production
+
+jobs:
+  pr-title-check:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^[A-Z].+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            starts with an uppercase character.
+
+  linked-issues:
+    name: Check Linked Issues
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for linked issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prTitle = context.payload.pull_request.title || '';
+
+            // Check for issue references in body or title
+            const issuePattern = /#\d+|closes|fixes|resolves/i;
+
+            if (!issuePattern.test(prBody) && !issuePattern.test(prTitle)) {
+              core.warning('⚠️  No linked issues found. Consider linking related issues.');
+            } else {
+              core.info('✅ Linked issues found');
+            }
+
+  lint-check:
+    name: Lint Check Required
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npm run lint:types
+
+      - name: Run ESLint
+        run: npm run lint:js
+
+      - name: Run Stylelint
+        run: npm run lint:css
+
+      - name: Check CSS variables
+        run: npm run check:css-vars
+        continue-on-error: true
+
+      - name: Check CSS classes
+        run: npm run check:css-classes
+        continue-on-error: true
+
+  test-coverage:
+    name: Test Coverage Reporting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Generate coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+          flags: unittests
+          name: codecov-pr-${{ github.event.pull_request.number }}
+
+      - name: Coverage report comment
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            let coverageReport = 'Coverage report not available';
+
+            try {
+              // Try to read coverage summary if available
+              if (fs.existsSync('./coverage/coverage-summary.json')) {
+                const summary = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
+                const total = summary.total;
+                coverageReport = `
+                  ## Test Coverage Report
+
+                  | Metric | Coverage |
+                  |--------|----------|
+                  | Lines | ${total.lines.pct}% |
+                  | Statements | ${total.statements.pct}% |
+                  | Functions | ${total.functions.pct}% |
+                  | Branches | ${total.branches.pct}% |
+                `;
+              }
+            } catch (error) {
+              core.info('Could not generate coverage report: ' + error.message);
+            }
+
+            core.info(coverageReport);
+
+  bundle-size-analysis:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Analyze bundle size
+        run: |
+          DIST_SIZE=$(du -sh dist/ | cut -f1)
+          echo "### 📦 Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total dist/ size:** $DIST_SIZE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Asset breakdown:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -lh dist/assets/ | tail -n +2 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Check bundle size limits
+        run: |
+          MAX_SIZE_MB=5
+          DIST_SIZE_MB=$(du -sm dist/ | cut -f1)
+
+          echo "Bundle size: ${DIST_SIZE_MB}MB (limit: ${MAX_SIZE_MB}MB)"
+
+          if [ $DIST_SIZE_MB -gt $MAX_SIZE_MB ]; then
+            echo "::warning::Bundle size (${DIST_SIZE_MB}MB) exceeds limit (${MAX_SIZE_MB}MB)"
+            echo "Consider code splitting or lazy loading"
+          else
+            echo "✅ Bundle size is within limits"
+          fi
+
+  security-check:
+    name: Security Vulnerability Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  pr-labels:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Auto-label based on files changed
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Label by size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const changedFiles = pr.changed_files;
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+
+            let sizeLabel = '';
+            const totalChanges = additions + deletions;
+
+            if (totalChanges < 10) {
+              sizeLabel = 'size/XS';
+            } else if (totalChanges < 50) {
+              sizeLabel = 'size/S';
+            } else if (totalChanges < 250) {
+              sizeLabel = 'size/M';
+            } else if (totalChanges < 1000) {
+              sizeLabel = 'size/L';
+            } else {
+              sizeLabel = 'size/XL';
+            }
+
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: [sizeLabel]
+              });
+            } catch (error) {
+              core.info('Could not add size label: ' + error.message);
+            }
+
+  conventional-commits:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commits = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+
+            const conventionalPattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+/;
+            let invalidCommits = [];
+
+            for (const commit of commits.data) {
+              const message = commit.commit.message.split('\n')[0];
+              if (!conventionalPattern.test(message)) {
+                invalidCommits.push({
+                  sha: commit.sha.substring(0, 7),
+                  message: message
+                });
+              }
+            }
+
+            if (invalidCommits.length > 0) {
+              core.warning('⚠️  Some commits do not follow Conventional Commits format:');
+              invalidCommits.forEach(c => {
+                core.warning(`  - ${c.sha}: ${c.message}`);
+              });
+            } else {
+              core.info('✅ All commits follow Conventional Commits format');
+            }
+
+  pr-summary:
+    name: PR Validation Summary
+    runs-on: ubuntu-latest
+    needs: [pr-title-check, linked-issues, lint-check, test-coverage, bundle-size-analysis]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Pull Request Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Title:** ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** ${{ github.event.pull_request.base.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "- PR Title Check: ${{ needs.pr-title-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Linked Issues: ${{ needs.linked-issues.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Lint Check: ${{ needs.lint-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Coverage: ${{ needs.test-coverage.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Bundle Size: ${{ needs.bundle-size-analysis.result }}" >> $GITHUB_STEP_SUMMARY
