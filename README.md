@@ -1,4 +1,4 @@
-# 🚀 Intinc Universal Dashboard
+ 🚀 Intinc Universal Dashboard
 
 A production-ready, enterprise-grade universal dashboard platform built with React, TypeScript, and Blink SDK. Features comprehensive security, testing, CI/CD, and monitoring infrastructure.
 
