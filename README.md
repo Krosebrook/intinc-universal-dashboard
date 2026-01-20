@@ -146,6 +146,89 @@ docker build -t intinc-dashboard \
 docker run -p 80:80 intinc-dashboard
 ```
 
+## 🌲 Git Workflow & Branching Strategy
+
+This repository uses a **three-branch workflow** for development, staging, and production environments.
+
+### Branch Overview
+
+```
+production (🏭 production)  ← Manual approval, 2 reviews
+    ↑
+main (🚀 staging)          ← Auto-deploy, 1 review  
+    ↑
+development (🌱 dev)       ← Auto-deploy, no review required
+    ↑
+feature branches
+```
+
+### Branch Descriptions
+
+| Branch | Environment | Auto-Deploy | Protection | Purpose |
+|--------|------------|-------------|------------|---------|
+| `development` | Development | ✅ Yes | Basic | Active development |
+| `main` | Staging | ✅ Yes | Medium | Pre-production QA |
+| `production` | Production | ⚠️  Manual | High | Production releases |
+
+### Quick Start
+
+```bash
+# Work on a new feature
+git checkout development
+git pull origin development
+git checkout -b feature/my-feature
+
+# Make changes and commit
+git add .
+git commit -m "feat: add new feature"
+git push origin feature/my-feature
+
+# Create PR to development → Auto-deploys to dev
+# After testing, merge to main → Auto-deploys to staging
+# After QA, merge to production → Manual approval required
+```
+
+### Workflow Generator
+
+We provide a web-based configuration generator to set up workflows for any project:
+
+🌐 **[Open Workflow Generator](/workflow-generator)** - Generate custom Git workflow configurations
+
+Or use the command-line tools:
+
+```bash
+# Pre-flight check
+./workflow-templates/pre-flight-check.sh
+
+# Validate workflow setup
+./workflow-templates/validate-refactor.sh
+
+# Generate AI refactoring prompts
+./workflow-templates/quick-refactor.sh
+
+# Configure branch protection via API
+export GITHUB_TOKEN='your_token'
+./workflow-templates/setup-branch-protection.sh
+```
+
+### Detailed Documentation
+
+📖 **[Complete Branching Strategy Guide](./workflow-templates/BRANCHING_STRATEGY.md)**
+
+Includes:
+- Detailed workflow examples
+- Branch protection rules
+- Conflict resolution guide
+- Emergency procedures
+- Team migration guide
+
+### Example Configurations
+
+The `workflow-templates/examples/` directory contains pre-configured examples for:
+- **React Native Mobile Apps** - iOS/Android with App Store deployment
+- **Python FastAPI** - Backend APIs with Docker and PostgreSQL
+- **Rust CLI Tools** - Cross-compilation and GitHub releases
+
 ## 📚 Documentation
 
 ### Getting Started
