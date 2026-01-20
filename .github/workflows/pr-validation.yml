@@ -50,10 +50,10 @@ jobs:
           script: |
             const prBody = context.payload.pull_request.body || '';
             const prTitle = context.payload.pull_request.title || '';
-            
+
             // Check for issue references in body or title
             const issuePattern = /#\d+|closes|fixes|resolves/i;
-            
+
             if (!issuePattern.test(prBody) && !issuePattern.test(prTitle)) {
               core.warning('⚠️  No linked issues found. Consider linking related issues.');
             } else {
@@ -128,7 +128,7 @@ jobs:
           script: |
             const fs = require('fs');
             let coverageReport = 'Coverage report not available';
-            
+
             try {
               // Try to read coverage summary if available
               if (fs.existsSync('./coverage/coverage-summary.json')) {
@@ -136,7 +136,7 @@ jobs:
                 const total = summary.total;
                 coverageReport = `
                   ## Test Coverage Report
-                  
+
                   | Metric | Coverage |
                   |--------|----------|
                   | Lines | ${total.lines.pct}% |
@@ -148,7 +148,7 @@ jobs:
             } catch (error) {
               core.info('Could not generate coverage report: ' + error.message);
             }
-            
+
             core.info(coverageReport);
 
   bundle-size-analysis:
@@ -186,9 +186,9 @@ jobs:
         run: |
           MAX_SIZE_MB=5
           DIST_SIZE_MB=$(du -sm dist/ | cut -f1)
-          
+
           echo "Bundle size: ${DIST_SIZE_MB}MB (limit: ${MAX_SIZE_MB}MB)"
-          
+
           if [ $DIST_SIZE_MB -gt $MAX_SIZE_MB ]; then
             echo "::warning::Bundle size (${DIST_SIZE_MB}MB) exceeds limit (${MAX_SIZE_MB}MB)"
             echo "Consider code splitting or lazy loading"
@@ -246,10 +246,10 @@ jobs:
             const changedFiles = pr.changed_files;
             const additions = pr.additions;
             const deletions = pr.deletions;
-            
+
             let sizeLabel = '';
             const totalChanges = additions + deletions;
-            
+
             if (totalChanges < 10) {
               sizeLabel = 'size/XS';
             } else if (totalChanges < 50) {
@@ -261,7 +261,7 @@ jobs:
             } else {
               sizeLabel = 'size/XL';
             }
-            
+
             try {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
@@ -291,10 +291,10 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number
             });
-            
+
             const conventionalPattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+/;
             let invalidCommits = [];
-            
+
             for (const commit of commits.data) {
               const message = commit.commit.message.split('\n')[0];
               if (!conventionalPattern.test(message)) {
@@ -304,7 +304,7 @@ jobs:
                 });
               }
             }
-            
+
             if (invalidCommits.length > 0) {
               core.warning('⚠️  Some commits do not follow Conventional Commits format:');
               invalidCommits.forEach(c => {
