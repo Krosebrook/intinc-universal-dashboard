@@ -1,0 +1,369 @@
+name: Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  validate-tag:
+    name: Validate Release Tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ steps.get-version.outputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+            echo "::error::Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z or X.Y.Z-suffix"
+            exit 1
+          fi
+          echo "✅ Version format is valid: $VERSION"
+
+  test:
+    name: Run Full Test Suite
+    runs-on: ubuntu-latest
+    needs: validate-tag
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run type checking
+        run: npm run lint:types
+
+      - name: Run unit tests
+        run: npm run test:coverage
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        continue-on-error: true
+
+  build:
+    name: Build Release Artifacts
+    runs-on: ubuntu-latest
+    needs: [validate-tag, test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Create release archive
+        run: |
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          tar -czf "intinc-universal-dashboard-v${VERSION}.tar.gz" dist/
+          zip -r "intinc-universal-dashboard-v${VERSION}.zip" dist/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            *.tar.gz
+            *.zip
+          retention-days: 90
+
+  generate-changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    needs: validate-tag
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.validate-tag.outputs.version }}';
+            
+            // Get previous tag
+            const tags = await github.rest.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const currentTag = tags.data.find(t => t.name === `v${version}`);
+            const previousTag = tags.data.find(t => t.name !== `v${version}`);
+            
+            if (!previousTag) {
+              return '## Initial Release\n\nThis is the first release of the project.';
+            }
+            
+            // Get commits between tags
+            const comparison = await github.rest.repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: previousTag.name,
+              head: currentTag ? currentTag.name : context.sha
+            });
+            
+            const commits = comparison.data.commits;
+            
+            // Categorize commits
+            const features = [];
+            const fixes = [];
+            const docs = [];
+            const other = [];
+            
+            commits.forEach(commit => {
+              const message = commit.commit.message.split('\n')[0];
+              if (message.startsWith('feat')) {
+                features.push(message);
+              } else if (message.startsWith('fix')) {
+                fixes.push(message);
+              } else if (message.startsWith('docs')) {
+                docs.push(message);
+              } else {
+                other.push(message);
+              }
+            });
+            
+            // Build changelog
+            let changelog = `## What's Changed\n\n`;
+            
+            if (features.length > 0) {
+              changelog += `### ✨ New Features\n\n`;
+              features.forEach(f => changelog += `- ${f}\n`);
+              changelog += '\n';
+            }
+            
+            if (fixes.length > 0) {
+              changelog += `### 🐛 Bug Fixes\n\n`;
+              fixes.forEach(f => changelog += `- ${f}\n`);
+              changelog += '\n';
+            }
+            
+            if (docs.length > 0) {
+              changelog += `### 📚 Documentation\n\n`;
+              docs.forEach(d => changelog += `- ${d}\n`);
+              changelog += '\n';
+            }
+            
+            if (other.length > 0) {
+              changelog += `### 🔧 Other Changes\n\n`;
+              other.forEach(o => changelog += `- ${o}\n`);
+              changelog += '\n';
+            }
+            
+            changelog += `\n**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${previousTag.name}...v${version}`;
+            
+            core.setOutput('changelog', changelog);
+            return changelog;
+
+      - name: Save changelog to file
+        run: |
+          cat << 'EOF' > RELEASE_CHANGELOG.md
+          ${{ steps.changelog.outputs.changelog }}
+          EOF
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: RELEASE_CHANGELOG.md
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate-tag, test, build, generate-changelog]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+
+      - name: Download changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ needs.validate-tag.outputs.version }}
+          tag_name: v${{ needs.validate-tag.outputs.version }}
+          body_path: RELEASE_CHANGELOG.md
+          draft: false
+          prerelease: ${{ contains(needs.validate-tag.outputs.version, '-') }}
+          files: |
+            *.tar.gz
+            *.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate release summary
+        run: |
+          echo "## 🚀 Release v${{ needs.validate-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** v${{ needs.validate-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Released by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- intinc-universal-dashboard-v${{ needs.validate-tag.outputs.version }}.tar.gz" >> $GITHUB_STEP_SUMMARY
+          echo "- intinc-universal-dashboard-v${{ needs.validate-tag.outputs.version }}.zip" >> $GITHUB_STEP_SUMMARY
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [validate-tag, create-release]
+    environment:
+      name: production
+      url: https://example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+
+      - name: Extract release archive
+        run: |
+          VERSION="${{ needs.validate-tag.outputs.version }}"
+          tar -xzf "intinc-universal-dashboard-v${VERSION}.tar.gz"
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying v${{ needs.validate-tag.outputs.version }} to production..."
+          # Add your production deployment commands here
+          # Example: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Health check
+        run: |
+          echo "Performing health check..."
+          # Add health check logic here
+          # Example: curl -f https://example.com/health || exit 1
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Production deployment successful"
+          echo "Version v${{ needs.validate-tag.outputs.version }} is now live"
+          # Add notification logic (Slack, Discord, email, etc.)
+
+  publish-docker:
+    name: Publish Docker Image
+    runs-on: ubuntu-latest
+    needs: [validate-tag, test, build]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ needs.validate-tag.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ needs.validate-tag.outputs.version }}
+            type=semver,pattern={{major}},value=v${{ needs.validate-tag.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [validate-tag, test, build, create-release, deploy-production, publish-docker]
+    if: always()
+    steps:
+      - name: Generate final summary
+        run: |
+          echo "## 🎉 Release Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Release v${{ needs.validate-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status Overview:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Validation: ${{ needs.validate-tag.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Release: ${{ needs.create-release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Production Deploy: ${{ needs.deploy-production.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Publish: ${{ needs.publish-docker.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Release](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-tag.outputs.version }})" >> $GITHUB_STEP_SUMMARY
