@@ -261,6 +261,14 @@ The `workflow-templates/examples/` directory contains pre-configured examples fo
 - **[Next 4 Features](./docs/NEXT_FEATURES.md)** - Detailed planning for upcoming features
 - [Contributing](./CONTRIBUTING.md) - Contribution guidelines
 
+### Documentation Audit
+- 📊 **[Documentation Audit Summary](./DOCUMENTATION_AUDIT_SUMMARY.md)** - **NEW** - Executive summary
+- 📋 **[Full Documentation Audit](./docs/DOCUMENTATION_AUDIT_2026.md)** - **NEW** - Complete audit report
+- 📖 **[Documentation Index](./docs/README.md)** - Complete documentation navigation with status
+
+**Audit Date:** January 21, 2026  
+**Status:** 42 documentation files | 16 new placeholders created | Critical gaps identified
+
 ## 🔒 Security
 
 This project implements multiple layers of security:
