@@ -19,7 +19,7 @@ interface Message {
 }
 
 export default function AIInsight() {
-  const { department, widgets } = useDashboard();
+  const { department, widgets, credits, consumeCredit } = useDashboard();
   const [insight, setInsight] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
@@ -47,6 +47,11 @@ export default function AIInsight() {
 
     if (!aiRateLimiter.check(currentUser.id)) {
       toast.error('AI usage limit reached. Please wait a moment.');
+      return;
+    }
+
+    if (credits <= 0) {
+      toast.error('No AI credits remaining. 5 credits per session.');
       return;
     }
 
@@ -86,6 +91,8 @@ export default function AIInsight() {
         });
       });
 
+      await consumeCredit();
+
       logAuditEvent(currentUser, {
         action: 'ai.qa',
         entity: AuditEntities.DASHBOARD,
@@ -109,6 +116,11 @@ export default function AIInsight() {
       return;
     }
 
+    if (credits <= 0) {
+      setInsight('No AI credits remaining. Upgrade for strategic analysis.');
+      return;
+    }
+
     setLoading(true);
     setInsight('');
     try {
@@ -124,6 +136,8 @@ export default function AIInsight() {
       }, (chunk) => {
         setInsight(prev => prev + chunk);
       });
+
+      await consumeCredit();
 
       logAuditEvent(currentUser, {
         action: 'ai.strategic_analysis',
@@ -166,8 +180,12 @@ export default function AIInsight() {
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 block">Intelligence Layer</span>
-              <CardTitle className="text-xl font-bold tracking-tight">
+              <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-3">
                 {mode === 'insights' ? 'AI Strategic Analysis' : 'Data Assistant'}
+                <div className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full border border-white/5">
+                  <div className={cn("w-1 h-1 rounded-full animate-pulse", credits > 0 ? "bg-primary-glow shadow-[0_0_5px_rgba(255,255,255,0.5)]" : "bg-red-500")} />
+                  <span className="text-[9px] font-black tracking-widest uppercase">{credits} CR</span>
+                </div>
               </CardTitle>
             </div>
           </div>

@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Layout, Save, Share2, MessageSquare, Download, Plus } from 'lucide-react';
+import { Layout, Save, Share2, MessageSquare, Download, Plus, Zap } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Department } from '../../../types/dashboard';
 import { useRBAC } from '../../../hooks/use-rbac';
+import { useDashboard } from '../../../hooks/use-dashboard';
 import { cn } from '../../../lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../components/ui/tooltip';
 
@@ -37,6 +38,7 @@ export function DashboardHeader({
   onAddWidget,
 }: DashboardHeaderProps) {
   const { hasPermission } = useRBAC();
+  const { credits } = useDashboard();
 
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
@@ -59,6 +61,14 @@ export function DashboardHeader({
       </div>
       
       <div className="flex items-center gap-2 flex-wrap">
+        <div className="hidden lg:flex items-center gap-2 px-3 h-12 bg-primary/5 border border-primary/20 rounded-2xl shadow-glow shadow-primary/5 transition-all hover:bg-primary/10 group">
+          <Zap size={14} className={cn("transition-transform group-hover:scale-125", credits > 0 ? "text-primary fill-primary/20" : "text-muted-foreground")} />
+          <div className="flex flex-col">
+            <span className="text-[8px] font-black uppercase tracking-widest text-primary/60 leading-none mb-0.5">AI Energy</span>
+            <span className="text-[11px] font-black tabular-nums tracking-tighter leading-none">{credits} Credits</span>
+          </div>
+        </div>
+        
         <TooltipProvider>
           <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.05] p-1.5 rounded-2xl shadow-sm">
             <HeaderButton 

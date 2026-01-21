@@ -55,6 +55,8 @@ interface DashboardContextType {
   setDashboardState: (key: string, value: any) => void;
   activeWorkspaceId: string | null;
   setActiveWorkspaceId: (id: string | null) => void;
+  credits: number;
+  consumeCredit: () => Promise<boolean>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -67,6 +69,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [globalFilters, setGlobalFilters] = useState<Record<string, any>>({});
   const [dashboardState, setDashboardStateInternal] = useState<Record<string, any>>({});
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
+  const [credits, setCredits] = useState<number>(5);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
   const [suggestedStep, setSuggestedStep] = useState<SuggestedStep | null>(null);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
@@ -80,9 +83,38 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = blink.auth.onAuthStateChanged((state) => {
       setCurrentUser(state.user);
+      if (state.user) {
+        // Fetch credits on login
+        blink.db.users.get({ id: state.user.id }).then(user => {
+          if (user && typeof user.credits === 'number') {
+            setCredits(user.credits);
+          }
+        });
+      }
     });
     return unsubscribe;
   }, []);
+
+  const consumeCredit = useCallback(async () => {
+    if (!currentUser) return false;
+    if (credits <= 0) {
+      toast.error('No AI credits remaining. Upgrade for more.');
+      return false;
+    }
+
+    try {
+      const newCredits = credits - 1;
+      await blink.db.users.update({ 
+        id: currentUser.id, 
+        credits: newCredits 
+      });
+      setCredits(newCredits);
+      return true;
+    } catch (error) {
+      logger.error('Error consuming credit:', error as Error);
+      return false;
+    }
+  }, [currentUser, credits]);
 
   useEffect(() => {
     // Start empty, let user upload or select template
@@ -244,7 +276,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     dashboardState,
     setDashboardState,
     activeWorkspaceId,
-    setActiveWorkspaceId
+    setActiveWorkspaceId,
+    credits,
+    consumeCredit
   };
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
