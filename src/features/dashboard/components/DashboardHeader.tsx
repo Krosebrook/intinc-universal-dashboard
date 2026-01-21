@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 
 interface DashboardHeaderProps {
   department: Department;
-  currentView: 'overview' | 'explorer';
+  currentView: 'overview' | 'explorer' | 'prd-generator' | 'analytics';
   isExporting: boolean;
   isDevMode: boolean;
   showComments: boolean;
@@ -21,6 +21,7 @@ interface DashboardHeaderProps {
   onToggleDevMode: (checked: boolean) => void;
   onExport: () => void;
   onAddWidget: () => void;
+  onViewChange: (view: 'overview' | 'explorer' | 'prd-generator' | 'analytics') => void;
 }
 
 export function DashboardHeader({
@@ -36,124 +37,186 @@ export function DashboardHeader({
   onToggleDevMode,
   onExport,
   onAddWidget,
+  onViewChange
 }: DashboardHeaderProps) {
   const { hasPermission } = useRBAC();
   const { credits } = useDashboard();
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
-      <div>
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-3 mb-1.5"
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-2 p-1 bg-white/[0.03] border border-white/[0.05] rounded-2xl w-fit">
+        <Button 
+          variant={currentView === 'overview' ? 'default' : 'ghost'} 
+          size="sm" 
+          onClick={() => onViewChange('overview')}
+          className={cn(
+            "rounded-xl text-[10px] font-black uppercase tracking-widest h-9 px-4 transition-all",
+            currentView === 'overview' 
+              ? 'bg-primary text-primary-foreground shadow-glow shadow-primary/20' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+          )}
         >
-          <div className="w-1.5 h-8 bg-primary rounded-full shadow-glow" />
-          <h2 className="text-3xl font-black tracking-tight text-foreground/90">
-            {currentView === 'overview' ? 'Executive Summary' : 'Data Explorer'}
-          </h2>
-        </motion.div>
-        <p className="text-muted-foreground/60 text-sm font-medium pl-4">
-          {currentView === 'overview' 
-            ? `Providing high-fidelity intelligence for ${department} operations.`
-            : 'Unlocking raw potential through custom data mapping and analysis.'}
-        </p>
+          Overview
+        </Button>
+        <Button 
+          id="data-explorer-tab"
+          variant={currentView === 'explorer' ? 'default' : 'ghost'} 
+          size="sm" 
+          onClick={() => onViewChange('explorer')}
+          className={cn(
+            "rounded-xl text-[10px] font-black uppercase tracking-widest h-9 px-4 transition-all",
+            currentView === 'explorer' 
+              ? 'bg-primary text-primary-foreground shadow-glow shadow-primary/20' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+          )}
+        >
+          Explorer
+        </Button>
+        <Button 
+          variant={currentView === 'analytics' ? 'default' : 'ghost'} 
+          size="sm" 
+          onClick={() => onViewChange('analytics')}
+          className={cn(
+            "rounded-xl text-[10px] font-black uppercase tracking-widest h-9 px-4 transition-all",
+            currentView === 'analytics' 
+              ? 'bg-primary text-primary-foreground shadow-glow shadow-primary/20' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+          )}
+        >
+          Analytics
+        </Button>
+        <Button 
+          variant={currentView === 'prd-generator' ? 'default' : 'ghost'} 
+          size="sm" 
+          onClick={() => onViewChange('prd-generator')}
+          className={cn(
+            "rounded-xl text-[10px] font-black uppercase tracking-widest h-9 px-4 transition-all",
+            currentView === 'prd-generator' 
+              ? 'bg-primary text-primary-foreground shadow-glow shadow-primary/20' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+          )}
+        >
+          Workflow
+        </Button>
       </div>
-      
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="hidden lg:flex items-center gap-2 px-3 h-12 bg-primary/5 border border-primary/20 rounded-2xl shadow-glow shadow-primary/5 transition-all hover:bg-primary/10 group">
-          <Zap size={14} className={cn("transition-transform group-hover:scale-125", credits > 0 ? "text-primary fill-primary/20" : "text-muted-foreground")} />
-          <div className="flex flex-col">
-            <span className="text-[8px] font-black uppercase tracking-widest text-primary/60 leading-none mb-0.5">AI Energy</span>
-            <span className="text-[11px] font-black tabular-nums tracking-tighter leading-none">{credits} Credits</span>
-          </div>
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
+        <div>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-3 mb-1.5"
+          >
+            <div className="w-1.5 h-8 bg-primary rounded-full shadow-glow" />
+            <h2 className="text-3xl font-black tracking-tight text-foreground/90">
+              {currentView === 'overview' ? 'Executive Summary' : 
+               currentView === 'analytics' ? 'Statistical Engine' :
+               currentView === 'explorer' ? 'Data Explorer' : 'Workflow Lab'}
+            </h2>
+          </motion.div>
+          <p className="text-muted-foreground/60 text-sm font-medium pl-4">
+            {currentView === 'overview' ? `Providing high-fidelity intelligence for ${department} operations.` :
+             currentView === 'analytics' ? 'Uncovering deep statistical patterns and correlations.' :
+             currentView === 'explorer' ? 'Unlocking raw potential through custom data mapping.' :
+             'Transforming insights into automated enterprise workflows.'}
+          </p>
         </div>
-        
-        <TooltipProvider>
-          <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.05] p-1.5 rounded-2xl shadow-sm">
-            <HeaderButton 
-              icon={<Layout size={16} />} 
-              label="Library" 
-              onClick={onShowTemplates}
-              disabled={!hasPermission('dashboard:create')}
-              permissionLabel="dashboard:create"
-            />
-            <HeaderButton 
-              icon={<Save size={16} />} 
-              label="Commit" 
-              onClick={onShowSave}
-              disabled={!hasPermission('dashboard:edit')}
-              permissionLabel="dashboard:edit"
-            />
-            <HeaderButton 
-              icon={<Share2 size={16} />} 
-              label="Broadcast" 
-              onClick={onShare}
-              disabled={!hasPermission('dashboard:share')}
-              permissionLabel="dashboard:share"
-            />
-            <div className="w-[1px] h-6 bg-white/5 mx-1" />
-            <HeaderButton 
-              icon={<MessageSquare size={16} />} 
-              label="Insights" 
-              onClick={onToggleComments}
-              active={showComments}
-            />
+      
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="hidden lg:flex items-center gap-2 px-3 h-12 bg-primary/5 border border-primary/20 rounded-2xl shadow-glow shadow-primary/5 transition-all hover:bg-primary/10 group">
+            <Zap size={14} className={cn("transition-transform group-hover:scale-125", credits > 0 ? "text-primary fill-primary/20" : "text-muted-foreground")} />
+            <div className="flex flex-col">
+              <span className="text-[8px] font-black uppercase tracking-widest text-primary/60 leading-none mb-0.5">AI Energy</span>
+              <span className="text-[11px] font-black tabular-nums tracking-tighter leading-none">{credits} Credits</span>
+            </div>
           </div>
+          
+          <TooltipProvider>
+            <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.05] p-1.5 rounded-2xl shadow-sm">
+              <HeaderButton 
+                icon={<Layout size={16} />} 
+                label="Library" 
+                onClick={onShowTemplates}
+                disabled={!hasPermission('dashboard:create')}
+                permissionLabel="dashboard:create"
+              />
+              <HeaderButton 
+                icon={<Save size={16} />} 
+                label="Commit" 
+                onClick={onShowSave}
+                disabled={!hasPermission('dashboard:edit')}
+                permissionLabel="dashboard:edit"
+              />
+              <HeaderButton 
+                icon={<Share2 size={16} />} 
+                label="Broadcast" 
+                onClick={onShare}
+                disabled={!hasPermission('dashboard:share')}
+                permissionLabel="dashboard:share"
+              />
+              <div className="w-[1px] h-6 bg-white/5 mx-1" />
+              <HeaderButton 
+                icon={<MessageSquare size={16} />} 
+                label="Insights" 
+                onClick={onToggleComments}
+                active={showComments}
+              />
+            </div>
 
-          <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.05] rounded-2xl px-4 h-12 shadow-sm transition-all hover:bg-white/[0.05]">
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Logic Mode</span>
-            <input 
-              type="checkbox" 
-              checked={isDevMode} 
-              onChange={(e) => hasPermission('dashboard:edit') && onToggleDevMode(e.target.checked)}
-              disabled={!hasPermission('dashboard:edit')}
-              className="w-4 h-4 rounded border-white/10 bg-white/5 accent-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-          </div>
+            <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.05] rounded-2xl px-4 h-12 shadow-sm transition-all hover:bg-white/[0.05]">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Logic Mode</span>
+              <input 
+                type="checkbox" 
+                checked={isDevMode} 
+                onChange={(e) => hasPermission('dashboard:edit') && onToggleDevMode(e.target.checked)}
+                disabled={!hasPermission('dashboard:edit')}
+                className="w-4 h-4 rounded border-white/10 bg-white/5 accent-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block">
-                <Button 
-                  variant="outline" 
-                  className="glass h-12 px-5 rounded-2xl hidden sm:flex border-white/[0.05] hover:bg-white/[0.05] transition-all active:scale-95 shadow-sm"
-                  onClick={onExport}
-                  disabled={isExporting || !hasPermission('export:pdf')}
-                >
-                  <Download className="w-4 h-4 mr-2.5 text-primary" />
-                  <span className="text-xs font-bold uppercase tracking-widest">{isExporting ? 'Processing...' : 'Export'}</span>
-                </Button>
-              </div>
-            </TooltipTrigger>
-            {!hasPermission('export:pdf') && (
-              <TooltipContent className="glass-card border-white/10 text-[10px] font-bold uppercase tracking-widest">
-                Permission Required: export:pdf
-              </TooltipContent>
-            )}
-          </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="inline-block">
+                  <Button 
+                    variant="outline" 
+                    className="glass h-12 px-5 rounded-2xl hidden sm:flex border-white/[0.05] hover:bg-white/[0.05] transition-all active:scale-95 shadow-sm"
+                    onClick={onExport}
+                    disabled={isExporting || !hasPermission('export:pdf')}
+                  >
+                    <Download className="w-4 h-4 mr-2.5 text-primary" />
+                    <span className="text-xs font-bold uppercase tracking-widest">{isExporting ? 'Processing...' : 'Export'}</span>
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {!hasPermission('export:pdf') && (
+                <TooltipContent className="glass-card border-white/10 text-[10px] font-bold uppercase tracking-widest">
+                  Permission Required: export:pdf
+                </TooltipContent>
+              )}
+            </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-block">
-                <Button 
-                  id="add-widget-button"
-                  size="icon" 
-                  className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground shadow-glow shadow-primary/20 hover:bg-primary-glow transition-all active:scale-90 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
-                  onClick={onAddWidget}
-                  disabled={!hasPermission('widget:create')}
-                >
-                  <Plus className="w-6 h-6" />
-                </Button>
-              </div>
-            </TooltipTrigger>
-            {!hasPermission('widget:create') && (
-              <TooltipContent className="glass-card border-white/10 text-[10px] font-bold uppercase tracking-widest">
-                Permission Required: widget:create
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="inline-block">
+                  <Button 
+                    id="add-widget-button"
+                    size="icon" 
+                    className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground shadow-glow shadow-primary/20 hover:bg-primary-glow transition-all active:scale-90 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+                    onClick={onAddWidget}
+                    disabled={!hasPermission('widget:create')}
+                  >
+                    <Plus className="w-6 h-6" />
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {!hasPermission('widget:create') && (
+                <TooltipContent className="glass-card border-white/10 text-[10px] font-bold uppercase tracking-widest">
+                  Permission Required: widget:create
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
     </div>
   );

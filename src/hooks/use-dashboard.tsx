@@ -41,7 +41,7 @@ interface DashboardContextType {
   createWorkspace: (name: string) => Promise<void>;
   generateMockData: (source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub' | 'OpenAI') => void;
   currentView: 'overview' | 'explorer' | 'prd-generator';
-  setCurrentView: (view: 'overview' | 'explorer' | 'prd-generator') => void;
+  setCurrentView: (view: 'overview' | 'explorer' | 'prd-generator' | 'analytics') => void;
   globalFilters: Record<string, any>;
   setGlobalFilter: (key: string, value: any) => void;
   clearFilters: () => void;
@@ -65,7 +65,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [department, setDepartment] = useState<Department>('Sales');
   const [widgets, setWidgets] = useState<WidgetConfig[]>([]);
   const [kpis, setKpis] = useState<KPIData[]>([]);
-  const [currentView, setCurrentView] = useState<'overview' | 'explorer' | 'prd-generator'>('explorer'); // Start in explorer (upload) mode
+  const [currentView, setCurrentView] = useState<'overview' | 'explorer' | 'prd-generator' | 'analytics'>('explorer'); // Start in explorer (upload) mode
   const [globalFilters, setGlobalFilters] = useState<Record<string, any>>({});
   const [dashboardState, setDashboardStateInternal] = useState<Record<string, any>>({});
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
