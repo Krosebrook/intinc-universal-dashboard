@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 
 interface DashboardHeaderProps {
   department: Department;
-  currentView: 'overview' | 'explorer' | 'prd-generator' | 'analytics';
+  currentView: 'overview' | 'explorer' | 'prd-generator' | 'analytics' | 'reports';
   isExporting: boolean;
   isDevMode: boolean;
   showComments: boolean;
@@ -21,7 +21,7 @@ interface DashboardHeaderProps {
   onToggleDevMode: (checked: boolean) => void;
   onExport: () => void;
   onAddWidget: () => void;
-  onViewChange: (view: 'overview' | 'explorer' | 'prd-generator' | 'analytics') => void;
+  onViewChange: (view: 'overview' | 'explorer' | 'prd-generator' | 'analytics' | 'reports') => void;
 }
 
 export function DashboardHeader({
@@ -86,6 +86,19 @@ export function DashboardHeader({
           Analytics
         </Button>
         <Button 
+          variant={currentView === 'reports' ? 'default' : 'ghost'} 
+          size="sm" 
+          onClick={() => onViewChange('reports')}
+          className={cn(
+            "rounded-xl text-[10px] font-black uppercase tracking-widest h-9 px-4 transition-all",
+            currentView === 'reports' 
+              ? 'bg-primary text-primary-foreground shadow-glow shadow-primary/20' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+          )}
+        >
+          Reports
+        </Button>
+        <Button 
           variant={currentView === 'prd-generator' ? 'default' : 'ghost'} 
           size="sm" 
           onClick={() => onViewChange('prd-generator')}
@@ -111,12 +124,14 @@ export function DashboardHeader({
             <h2 className="text-3xl font-black tracking-tight text-foreground/90">
               {currentView === 'overview' ? 'Executive Summary' : 
                currentView === 'analytics' ? 'Statistical Engine' :
+               currentView === 'reports' ? 'Reporting Hub' :
                currentView === 'explorer' ? 'Data Explorer' : 'Workflow Lab'}
             </h2>
           </motion.div>
           <p className="text-muted-foreground/60 text-sm font-medium pl-4">
             {currentView === 'overview' ? `Providing high-fidelity intelligence for ${department} operations.` :
              currentView === 'analytics' ? 'Uncovering deep statistical patterns and correlations.' :
+             currentView === 'reports' ? 'Automating intelligence distribution across the enterprise.' :
              currentView === 'explorer' ? 'Unlocking raw potential through custom data mapping.' :
              'Transforming insights into automated enterprise workflows.'}
           </p>

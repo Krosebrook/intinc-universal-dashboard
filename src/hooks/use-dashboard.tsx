@@ -40,8 +40,8 @@ interface DashboardContextType {
   workspaces: Workspace[];
   createWorkspace: (name: string) => Promise<void>;
   generateMockData: (source: 'Stripe' | 'Jira' | 'AWS' | 'GitHub' | 'OpenAI') => void;
-  currentView: 'overview' | 'explorer' | 'prd-generator';
-  setCurrentView: (view: 'overview' | 'explorer' | 'prd-generator' | 'analytics') => void;
+  currentView: 'overview' | 'explorer' | 'prd-generator' | 'analytics' | 'reports';
+  setCurrentView: (view: 'overview' | 'explorer' | 'prd-generator' | 'analytics' | 'reports') => void;
   globalFilters: Record<string, any>;
   setGlobalFilter: (key: string, value: any) => void;
   clearFilters: () => void;
@@ -65,7 +65,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [department, setDepartment] = useState<Department>('Sales');
   const [widgets, setWidgets] = useState<WidgetConfig[]>([]);
   const [kpis, setKpis] = useState<KPIData[]>([]);
-  const [currentView, setCurrentView] = useState<'overview' | 'explorer' | 'prd-generator' | 'analytics'>('explorer'); // Start in explorer (upload) mode
+  const [currentView, setCurrentView] = useState<'overview' | 'explorer' | 'prd-generator' | 'analytics' | 'reports'>('explorer'); // Start in explorer (upload) mode
   const [globalFilters, setGlobalFilters] = useState<Record<string, any>>({});
   const [dashboardState, setDashboardStateInternal] = useState<Record<string, any>>({});
   const [currentUser, setCurrentUser] = useState<BlinkUser | null>(null);
@@ -148,6 +148,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         description: 'Ready with your data? Head back to Overview to see AI-powered summaries.',
         actionLabel: 'View Dashboard',
         onAction: () => setCurrentView('overview')
+      });
+    } else if (currentView === 'overview' && widgets.length >= 3) {
+      // Suggest scheduling a report if they have data
+      setSuggestedStep({
+        id: 'schedule-report',
+        title: 'Automate Insights',
+        description: 'Set up a recurring automated report to keep your stakeholders informed.',
+        actionLabel: 'Schedule Report',
+        onAction: () => setCurrentView('reports')
       });
     } else {
       setSuggestedStep(null);

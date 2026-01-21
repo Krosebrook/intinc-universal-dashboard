@@ -18,6 +18,8 @@ import { DashboardDevMode } from '../features/dashboard/components/DashboardDevM
 import { DashboardCollaboration } from '../features/collaboration/components/DashboardCollaboration';
 import { DashboardSavedViews } from '../features/dashboard/components/DashboardSavedViews';
 import { OnboardingWizard } from '../features/dashboard/components/OnboardingWizard';
+import { AnalyticsDashboard } from '../features/dashboard/components/AnalyticsDashboard';
+import { ReportingHub } from '../features/dashboard/components/ReportingHub';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { FeatureSpotlight } from '../features/dashboard/components/FeatureSpotlight';
 import { Input } from '../components/ui/input';
@@ -26,24 +28,25 @@ import { Button } from '../components/ui/button';
 
 export default function DashboardPage() {
   const { 
-    department, 
-    kpis, 
-    widgets, 
-    setWidgets, 
-    saveDashboard, 
-    isLoading, 
-    comments, 
-    addComment, 
-    fetchComments,
-    savedDashboards,
-    loadDashboard,
-    deleteDashboard,
-    currentView,
-    isWidgetBuilderOpen,
-    setIsWidgetBuilderOpen,
-    suggestedStep,
-    showOnboarding,
-    setShowOnboarding
+  department, 
+  kpis, 
+  widgets, 
+  setWidgets, 
+  saveDashboard, 
+  isLoading, 
+  comments, 
+  addComment, 
+  fetchComments,
+  savedDashboards,
+  loadDashboard,
+  deleteDashboard,
+  currentView,
+  setCurrentView,
+  isWidgetBuilderOpen,
+  setIsWidgetBuilderOpen,
+  suggestedStep,
+  showOnboarding,
+  setShowOnboarding
   } = useDashboard();
   
   const [showTemplates, setShowTemplates] = useState(false);
@@ -122,6 +125,7 @@ export default function DashboardPage() {
           onToggleDevMode={setIsDevMode}
           onExport={handleExport}
           onAddWidget={() => setIsWidgetBuilderOpen(true)}
+          onViewChange={setCurrentView}
         />
 
         <FeatureSpotlight 
@@ -227,6 +231,10 @@ export default function DashboardPage() {
                 )}
               </div>
             </>
+          ) : currentView === 'analytics' ? (
+            <AnalyticsDashboard />
+          ) : currentView === 'reports' ? (
+            <ReportingHub />
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
