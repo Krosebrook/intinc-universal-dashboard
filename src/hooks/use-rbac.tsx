@@ -38,44 +38,58 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = blink.auth.onAuthStateChanged(async (state) => {
       setCurrentUser(state.user);
       if (state.user) {
-        // Automatically claim pending invitations for this email
-        try {
-          const pendingInvites = await blink.db.workspaceMembers.list({
-            where: { email: state.user.email, userId: 'pending' }
-          });
-          
-          for (const invite of (pendingInvites || [])) {
-            await blink.db.workspaceMembers.update(invite.id, {
-              userId: state.user.id,
-              displayName: state.user.displayName || 'New Member',
-              joinedAt: new Date().toISOString()
-            });
-            
-            await blink.db.auditLogs.create({
-              userId: state.user.id,
-              action: 'invitation_accepted',
-              entity: 'workspace',
-              entityId: invite.workspaceId,
-              metadata: null
-            });
-          }
-          
-          if (pendingInvites && pendingInvites.length > 0) {
-            toast.success(`You've joined ${pendingInvites.length} new workspace(s)!`);
-          }
-        } catch (error) {
-          logger.error('Failed to claim invitations:', error as Error);
-        }
-
         // Determine role from user metadata or default to 'editor' for authenticated users
         const userRole = (state.user.metadata as any)?.role as Role || 'editor';
         setCurrentRole(userRole);
         setPermissions(ROLE_DEFINITIONS[userRole]?.permissions || []);
+        setIsLoading(false);
+
+        // Automatically claim pending invitations for this email (deferred, non-blocking)
+        // This runs after auth state is set to prevent blocking the UI
+        setTimeout(async () => {
+          try {
+            const pendingInvites = await blink.db.workspaceMembers.list({
+              where: { email: state.user!.email, userId: 'pending' }
+            });
+            
+            for (const invite of (pendingInvites || [])) {
+              try {
+                await blink.db.workspaceMembers.update(invite.id, {
+                  userId: state.user!.id,
+                  displayName: state.user!.displayName || 'New Member',
+                  joinedAt: new Date().toISOString()
+                });
+                
+                await blink.db.auditLogs.create({
+                  userId: state.user!.id,
+                  action: 'invitation_accepted',
+                  entity: 'workspace',
+                  entityId: invite.workspaceId,
+                  metadata: null
+                });
+              } catch (updateError) {
+                // Silently handle individual invite claim failures
+                logger.warn('Failed to claim individual invitation:', updateError as Error);
+              }
+            }
+            
+            if (pendingInvites && pendingInvites.length > 0) {
+              toast.success(`You've joined ${pendingInvites.length} new workspace(s)!`);
+            }
+          } catch (error: any) {
+            // Silently handle 403 errors - user may not have access to workspace_members yet
+            if (error?.message?.includes('403') || error?.status === 403) {
+              // Expected for new users without any workspace memberships
+              return;
+            }
+            logger.warn('Failed to claim invitations:', error as Error);
+          }
+        }, 500);
       } else {
         setCurrentRole('guest');
         setPermissions(ROLE_DEFINITIONS.guest.permissions);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
     return unsubscribe;
   }, []);

@@ -84,12 +84,22 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = blink.auth.onAuthStateChanged((state) => {
       setCurrentUser(state.user);
       if (state.user) {
-        // Fetch credits on login
-        blink.db.users.get({ id: state.user.id }).then(user => {
-          if (user && typeof user.credits === 'number') {
-            setCredits(user.credits);
-          }
-        });
+        // Fetch credits on login (deferred, non-blocking with error handling)
+        setTimeout(() => {
+          blink.db.users.get({ id: state.user!.id })
+            .then(user => {
+              if (user && typeof user.credits === 'number') {
+                setCredits(user.credits);
+              }
+            })
+            .catch((error: any) => {
+              // Silently handle 403 errors - user record may not exist yet
+              if (error?.message?.includes('403') || error?.status === 403) {
+                return;
+              }
+              logger.warn('Failed to fetch user credits:', error);
+            });
+        }, 300);
       }
     });
     return unsubscribe;
